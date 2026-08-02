@@ -204,7 +204,7 @@ input:focus{outline:none;border-color:var(--gold)}
   <div id="srcSeeds"><div class="seeds-grid" id="seedsGrid"></div></div>
 
   <div id="srcCustom" style="display:none">
-    <textarea id="customInput" placeholder="Brain dump. Raw thought. Meeting frustration. Observation from this week. Real experience only — no fabrication..."></textarea>
+    <textarea id="customInput" placeholder="Brain dump. Raw thought. Meeting frustration. Observation from this week. Real experience only — no fabrication. Have a real stat or source (Gartner, McKinsey, a report you read)? Paste it exactly and I'll use it — I won't invent one."></textarea>
     <button class="btn btn-gold" onclick="genFromCustom()" style="margin-top:8px">→ GENERATE 3 VARIANTS</button>
   </div>
 
@@ -502,6 +502,8 @@ VOICE: No long dashes. No corporate speak. No rapidly evolving game-changer exci
 CRITICAL RULE ON NAMING COMPANIES: Do NOT name a specific employer (IBM, Toyota, Union Pacific, Hallmark, Xoriant) by default. Credibility can come from years of experience, role, or general industry pattern-recognition without naming an employer. Only include a named company if it is explicitly supplied in the request for this specific post. Absence of a company name is the default and correct state, not a gap to fill in.
 
 CRITICAL RULE ON RESOURCES AND OPPORTUNITIES: NEVER invent the name of a specific course, certification, provider, program, scholarship, or opportunity. If a post is about sharing a free resource or opportunity, only reference the exact one supplied in the user's input. If none is supplied, write generally about the type of value worth sharing without naming a fake specific one.
+
+CRITICAL RULE ON STATISTICS AND RESEARCH CITATIONS: NEVER invent or attribute a specific statistic, percentage, study, or quote to a research firm, analyst house, or publication (Gartner, McKinsey, Forrester, HBR, etc.) unless the user explicitly supplied that exact figure and source in their input for this post. Fabricated statistics attributed to real institutions are a serious credibility risk. If no real source is supplied, either speak in general first-person operator terms with no institutional attribution, or use only statistics that were explicitly provided in the news context for this generation.
 
 POST STRUCTURE — TWO MODES, USE THE ONE THAT MATCHES THE REQUEST:
 
@@ -898,6 +900,7 @@ function setSrcTab(tab, btn) {
   document.querySelectorAll('.source-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   ['seeds','custom','live'].forEach(t=>{ const el=document.getElementById('src'+t.charAt(0).toUpperCase()+t.slice(1)); if(el) el.style.display=t===tab?'block':'none'; });
+  const vs=document.getElementById('variantsSection'); if(vs) vs.style.display='none';
 }
 
 function renderSeeds() {
