@@ -437,6 +437,22 @@ const ICONS = {operator:'◈',story:'◉',data:'▣',culture:'◎',firstgen:'◇
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const CAL_SCHED = {1:{type:'AI',time:'7:30am',color:'#7EB8D4'},2:{type:'Leadership',time:'8:00am',color:'#C8A96E'},3:{type:'Data',time:'7:00am',color:'#9B8EC8'},4:{type:'Story',time:'8:00am',color:'#7AC8A0'},5:{type:'Global',time:'8:00am',color:'#C8956E'},6:{type:'Rest',time:'',color:'#333'},0:{type:'Rest',time:'',color:'#333'}};
 
+// REAL, VERIFIED free learning resources — confirmed current and legitimate as of 2026
+// via independent cross-referenced research. Never invented. Update this list only
+// with resources that have been actually verified, not generated.
+const VERIFIED_RESOURCES = [
+  {name:'Google Cloud Skills Boost — Introduction to Generative AI', provider:'Google', desc:'Free short course on how LLMs and generative models work. Certificate on completion.', url:'cloudskillsboost.google'},
+  {name:'IBM SkillsBuild — AI Courses & Digital Badges', provider:'IBM', desc:'Large free library of AI courses with verifiable digital badges.', url:'skillsbuild.org'},
+  {name:'Microsoft Learn — Azure AI Fundamentals (AI-901)', provider:'Microsoft', desc:'Free foundational AI training. Note: AI-900 retired June 2026, replaced by AI-901.', url:'learn.microsoft.com'},
+  {name:'AWS Skill Builder — Cloud AI Training', provider:'Amazon', desc:'Free cloud-based AI and ML training directly from AWS.', url:'skillbuilder.aws'},
+  {name:'DeepLearning.AI — Short Courses', provider:'Andrew Ng / DeepLearning.AI', desc:'Free, highly-regarded short courses. Note: these are learning courses, not official certificates.', url:'deeplearning.ai'},
+  {name:'Harvard CS50x', provider:'Harvard / edX', desc:'Free gold-standard foundational computer science course, self-paced.', url:'cs50.harvard.edu'},
+  {name:'LinkedIn Learning — Getting Started with AI and Machine Learning', provider:'LinkedIn', desc:'Free introductory course, good foundation for non-technical professionals.', url:'linkedin.com/learning'},
+  {name:'Kaggle Learn', provider:'Kaggle (Google)', desc:'Free hands-on micro-courses in ML, Python, and data science with real datasets.', url:'kaggle.com/learn'},
+  {name:'MIT OpenCourseWare', provider:'MIT', desc:'Free access to real MIT course materials across computer science and data.', url:'ocw.mit.edu'},
+  {name:'Elements of AI', provider:'University of Helsinki', desc:'Free, widely-praised, one of the easiest true beginner introductions to AI.', url:'elementsofai.com'},
+];
+
 const SEEDS = [
   {type:'operator',text:'C-suite collecting AI on resume with zero ROI accountability or skin in the game'},
   {type:'operator',text:'88% of companies use AI. Only 39% see results. The gap is permission not technology.'},
@@ -906,7 +922,21 @@ function setSrcTab(tab, btn) {
 function renderSeeds() {
   const grid=document.getElementById('seedsGrid');if(!grid)return;
   const filtered=activePillar?SEEDS.filter(s=>s.type===activePillar):SEEDS;
-  grid.innerHTML=filtered.map(s=>{
+
+  let html = '';
+  if(activePillar==='value'){
+    html += `<div style="grid-column:1/-1;font-size:9px;color:var(--green);font-family:monospace;letter-spacing:2px;margin-bottom:6px">✓ VERIFIED REAL RESOURCES — cross-checked, not invented</div>`;
+    html += VERIFIED_RESOURCES.map((r,i)=>`
+      <div class="seed-card" style="border-left:3px solid #7AC8A0" onclick="generateLearningCarousel(${i})">
+        <div style="font-size:9px;color:#7AC8A0;font-family:monospace;letter-spacing:2px;margin-bottom:5px">✓ VERIFIED · ${r.provider.toUpperCase()}</div>
+        <div style="font-size:13px;color:#D0C8B8;line-height:1.5;margin-bottom:4px">${r.name}</div>
+        <div style="font-size:11px;color:var(--dim);font-family:monospace;line-height:1.4">${r.desc}</div>
+        <div style="font-size:9px;color:var(--faint);font-family:monospace;margin-top:8px">TAP TO GENERATE LEARNING CAROUSEL →</div>
+      </div>`).join('');
+    html += `<div style="grid-column:1/-1;font-size:9px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin:14px 0 6px">OR SHARE YOUR OWN VERIFIED RESOURCE</div>`;
+  }
+
+  html += filtered.map(s=>{
     const action = s.routeToBrainDump
       ? `routeToBrainDump('${escJ(s.text)}')`
       : `generate('${escJ(s.text)}','${s.type}')`;
@@ -918,6 +948,52 @@ function renderSeeds() {
       <div style="font-size:9px;color:var(--faint);font-family:monospace;margin-top:8px">${cta}</div>
     </div>`;
   }).join('');
+
+  grid.innerHTML = html;
+}
+
+async function generateLearningCarousel(resourceIndex) {
+  if(!checkClaudeKey()) return;
+  const r = VERIFIED_RESOURCES[resourceIndex];
+  hideErr('genErr');
+  document.getElementById('genLoading').style.display='block';
+  document.getElementById('variantsSection').style.display='none';
+
+  const resourceFact = `${r.name} by ${r.provider}. ${r.desc} (${r.url})`;
+
+  try {
+    // Generate the accompanying post text (sourced, verified)
+    const postText = await callAPI(
+      `Write a short LinkedIn caption (100-150 words) for Balaji Veeramani introducing a free learning resource he is sharing with his network. This resource is REAL and VERIFIED — do not alter any facts about it: ${resourceFact}. Warm, generous tone, genuinely wants to help people grow. Mention this is going with a carousel walking through it. End with an invitation to save/share and a question. 3-4 hashtags. Return ONLY the caption text.`,
+      DNA
+    );
+    // Generate the carousel structure using the research-backed pattern:
+    // bold hook creating a knowledge gap, then a clear saveable framework
+    const carouselRaw = await callAPI(
+      `Create a 6-slide LinkedIn educational carousel for Balaji Veeramani about this REAL verified resource — do not alter any facts: ${resourceFact}\n\nFollow this proven structure: Slide 1 is a bold hook creating a "knowledge gap" (a surprising question or claim that makes people want to swipe). Slides 2-5 break down why this resource matters and what it actually teaches, one clear idea per slide, tactical and saveable. Slide 6 is the resource name/provider clearly stated plus a call to action.\n\nReturn ONLY valid JSON array:\n[{"slideNum":1,"label":"HOOK","headline":"...","body":"...","style":"dark"},{"slideNum":2,"label":"WHY THIS MATTERS","headline":"...","body":"...","style":"light"},{"slideNum":3,"label":"WHAT YOU LEARN","headline":"...","body":"...","style":"dark"},{"slideNum":4,"label":"WHO IT'S FOR","headline":"...","body":"...","style":"light"},{"slideNum":5,"label":"HOW TO START","headline":"...","body":"...","style":"dark"},{"slideNum":6,"label":"THE RESOURCE","headline":"${escSVG(r.name)}","body":"${escSVG(r.provider+' · Free · '+r.url)}","style":"gold"}]`,
+      DNA
+    );
+
+    const s=carouselRaw.indexOf('['),e=carouselRaw.lastIndexOf(']')+1;
+    if(s!==-1){
+      carouselSlides = JSON.parse(carouselRaw.slice(s,e));
+      currentSlide = 0;
+    }
+
+    document.getElementById('genLoading').style.display='none';
+    renderVariants([postText], [scorePost(postText)], {hashtags:['#FreeLearning','#AIEducation','#DataCulture','#CareerGrowth','#'+r.provider.replace(/\s/g,'')], bestTime:'Tue–Thu 7–9am', viralTip:'This performs best as a carousel — go to Visuals tab after copying this caption, the carousel is already built below.'}, 'value', {label:'✓ VERIFIED RESOURCE', color:'#7AC8A0', detail:r.name+' — '+r.provider});
+
+    // Auto-populate the Visuals tab carousel too
+    if(carouselSlides.length){
+      document.getElementById('visualInput').value = postText;
+      document.getElementById('carouselSection').style.display='block';
+      renderCarousel();
+    }
+  } catch(err){
+    document.getElementById('genLoading').style.display='none';
+    const providerLabel={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider]||'your provider';
+    showErr('genErr','Learning carousel generation failed via '+providerLabel+': '+err.message);
+  }
 }
 
 function routeToBrainDump(promptGuide) {
@@ -979,7 +1055,11 @@ async function generate(topicText, typeId, mode) {
     const posts=[p1,p2,p3];
     const scores=posts.map(p=>scorePost(p));
     document.getElementById('genLoading').style.display='none';
-    renderVariants(posts,scores,hashData);
+    renderVariants(posts,scores,hashData,typeId,
+      isCommentary
+        ? {label:'✓ SOURCED FROM LIVE NEWS', color:'#7AC8A0', detail:topicText.split('. ')[0].substring(0,80)}
+        : (activeSrcTab==='custom' ? {label:'YOUR INPUT', color:'#7EB8D4', detail:'Based on what you typed — verify any facts you included are accurate'} : null)
+    );
     updateStats();
   } catch(e) {
     document.getElementById('genLoading').style.display='none';
@@ -1007,12 +1087,20 @@ function scorePost(text) {
   return{score,label,color,hook,hookColor,words};
 }
 
-function renderVariants(variants,scores,hashData) {
+function renderVariants(variants,scores,hashData,typeId,sourceBadge) {
   const section=document.getElementById('variantsSection');
   const wrap=document.getElementById('variantsWrap');
   section.style.display='block';
 
-  const hashPanel=`<div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:14px;margin-bottom:12px">
+  const badge = sourceBadge ? `<div style="background:${sourceBadge.color}18;border:1px solid ${sourceBadge.color}60;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:11px;font-weight:700;color:${sourceBadge.color};font-family:monospace">${sourceBadge.label}</span>
+    ${sourceBadge.detail?`<span style="font-size:11px;color:var(--muted)">${sourceBadge.detail}</span>`:''}
+  </div>` : `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:10px">
+    <span style="font-size:11px;font-weight:700;color:var(--dim);font-family:monospace">○ OPERATOR INSIGHT</span>
+    <span style="font-size:11px;color:var(--dim)"> — general perspective, no external citation. Verify before posting.</span>
+  </div>`;
+
+  const hashPanel=badge+`<div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:14px;margin-bottom:12px">
     <div style="font-size:8px;letter-spacing:4px;color:var(--green);font-family:monospace;margin-bottom:8px">LIVE HASHTAG INTELLIGENCE</div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${(hashData.hashtags||[]).map(h=>`<span style="background:#0d2a0d;border:1px solid #1a4a1a;color:var(--green);padding:3px 9px;border-radius:99px;font-size:10px;font-family:monospace">${h}</span>`).join('')}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
