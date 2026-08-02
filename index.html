@@ -1237,7 +1237,15 @@ async function callDeepseek(userMsg, sys){
 // ============ HELPERS ============
 function showErr(id,msg){const b=document.getElementById(id);if(b){b.textContent=msg;b.style.display='block';}}
 function hideErr(id){const b=document.getElementById(id);if(b)b.style.display='none';}
-function escJ(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n');}
+function escJ(s){
+  // Step 1: escape for the single-quoted JS string literal itself
+  let out = (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+  // Step 2: escape for the surrounding double-quoted HTML onclick="..." attribute
+  // (HTML doesn't understand JS's backslash-escaping, so a literal " here would
+  // prematurely close the attribute and silently break the click handler)
+  out = out.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return out;
+}
 function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function copyTxt(btn,text){navigator.clipboard.writeText(text.replace(/\\n/g,'\n'));const orig=btn.textContent;const origBg=btn.style.background;btn.textContent='✓ COPIED';btn.style.background='#0a1a0a';btn.style.color='#7AC8A0';setTimeout(()=>{btn.textContent=orig;btn.style.background=origBg;btn.style.color='';},3000);}
 function rateBtn(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.style.opacity='0.25');btn.style.opacity='1';btn.style.background='#1a1a1a';}
