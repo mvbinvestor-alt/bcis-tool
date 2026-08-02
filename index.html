@@ -519,7 +519,8 @@ window.onload = () => {
   renderCalendar();
   updateStats();
   loadAllNews();
-  if(claudeKey) loadBrief();
+  const activeKeyPresent={claude:claudeKey,gemini:geminiKey,groq:groqKey,deepseek:deepseekKey}[activeProvider];
+  if(activeKeyPresent) loadBrief();
 };
 
 // ============ NAV ============
@@ -743,7 +744,7 @@ function genFromLiveTopic() {
 
 // ============ BRIEF ============
 async function loadBrief() {
-  if(!claudeKey) return;
+  if(!checkClaudeKey()) return;
   const btn=document.getElementById('briefBtn');
   btn.disabled=true;
   btn.innerHTML='<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span> Generating...';
