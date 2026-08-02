@@ -328,12 +328,48 @@ input:focus{outline:none;border-color:var(--gold)}
 <div class="page" id="page-setup">
   <div style="font-size:20px;color:var(--text);margin-bottom:16px">Setup</div>
 
+  <div class="sec">AI Provider</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Pick which AI writes your posts. Free options avoid Claude's per-post cost.</div>
+    <div class="pill-row" id="providerRow" style="margin-bottom:12px">
+      <button class="pill provider-pill" data-provider="claude" onclick="setProvider('claude',this)">Claude</button>
+      <button class="pill provider-pill" data-provider="gemini" onclick="setProvider('gemini',this)">Gemini (Free)</button>
+      <button class="pill provider-pill" data-provider="groq" onclick="setProvider('groq',this)">Llama via Groq (Free)</button>
+      <button class="pill provider-pill" data-provider="deepseek" onclick="setProvider('deepseek',this)">DeepSeek (~Free)</button>
+    </div>
+    <div id="providerActive" style="font-size:11px;color:var(--green);font-family:monospace;margin-bottom:4px">Active: Claude</div>
+  </div>
+
   <div class="sec">Claude API Key</div>
   <div class="card">
-    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get from: <span style="color:var(--gold)">console.anthropic.com</span> → API Keys</div>
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get from: <span style="color:var(--gold)">console.anthropic.com</span> → API Keys · Paid, highest quality</div>
     <input type="password" id="claudeKeyInput" placeholder="sk-ant-api03-..." />
     <div style="font-size:11px;font-family:monospace;margin-bottom:10px" id="claudeStatus">Not configured</div>
     <button class="btn btn-gold" onclick="saveClaudeKey()">SAVE CLAUDE KEY</button>
+  </div>
+
+  <div class="sec">Gemini API Key — Free</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get free from: <span style="color:var(--gold)">aistudio.google.com/apikey</span> · No card needed</div>
+    <input type="password" id="geminiKeyInput" placeholder="AIza..." />
+    <div style="font-size:11px;font-family:monospace;margin-bottom:10px" id="geminiStatus">Not configured</div>
+    <button class="btn btn-gold" onclick="saveGeminiKey()">SAVE GEMINI KEY</button>
+  </div>
+
+  <div class="sec">Groq API Key — Free (Llama)</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get free from: <span style="color:var(--gold)">console.groq.com/keys</span> · No card, fastest free option</div>
+    <input type="password" id="groqKeyInput" placeholder="gsk_..." />
+    <div style="font-size:11px;font-family:monospace;margin-bottom:10px" id="groqStatus">Not configured</div>
+    <button class="btn btn-gold" onclick="saveGroqKey()">SAVE GROQ KEY</button>
+  </div>
+
+  <div class="sec">DeepSeek API Key — Nearly Free</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get from: <span style="color:var(--gold)">platform.deepseek.com</span> · 5M free tokens on signup, then pennies</div>
+    <input type="password" id="deepseekKeyInput" placeholder="sk-..." />
+    <div style="font-size:11px;font-family:monospace;margin-bottom:10px" id="deepseekStatus">Not configured</div>
+    <button class="btn btn-gold" onclick="saveDeepseekKey()">SAVE DEEPSEEK KEY</button>
   </div>
 
   <div class="sec">NewsAPI Key</div>
@@ -444,6 +480,10 @@ POST STRUCTURE Operator Arc: Line 1 counterintuitive blunt hook. Lines 2-3 permi
 
 // ============ STATE ============
 let claudeKey = localStorage.getItem('bcis_claude_key') || '';
+let geminiKey = localStorage.getItem('bcis_gemini_key') || '';
+let groqKey = localStorage.getItem('bcis_groq_key') || '';
+let deepseekKey = localStorage.getItem('bcis_deepseek_key') || '';
+let activeProvider = localStorage.getItem('bcis_provider') || 'claude';
 let newsKey = localStorage.getItem('bcis_news_key') || NEWS_API_KEY;
 let activePillar = null;
 let activeSrcTab = 'seeds';
@@ -469,6 +509,10 @@ window.onload = () => {
   }
 
   if(claudeKey){document.getElementById('claudeKeyInput').value='••••••••••••••••••••';document.getElementById('claudeStatus').textContent='✓ Loaded';document.getElementById('claudeStatus').style.color='var(--green)';}
+  if(geminiKey){document.getElementById('geminiKeyInput').value='••••••••••••••••••••';document.getElementById('geminiStatus').textContent='✓ Loaded';document.getElementById('geminiStatus').style.color='var(--green)';}
+  if(groqKey){document.getElementById('groqKeyInput').value='••••••••••••••••••••';document.getElementById('groqStatus').textContent='✓ Loaded';document.getElementById('groqStatus').style.color='var(--green)';}
+  if(deepseekKey){document.getElementById('deepseekKeyInput').value='••••••••••••••••••••';document.getElementById('deepseekStatus').textContent='✓ Loaded';document.getElementById('deepseekStatus').style.color='var(--green)';}
+  highlightActiveProvider();
   if(newsKey){document.getElementById('newsKeyInput').value='••••••••••••••••••••';document.getElementById('newsStatus').textContent='✓ NewsAPI key loaded';document.getElementById('newsStatus').style.color='var(--green)';}
 
   renderSeeds();
@@ -489,8 +533,41 @@ function showPage(id, btn) {
 
 // ============ SETUP ============
 function saveClaudeKey(){const v=document.getElementById('claudeKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_claude_key',v);claudeKey=v;document.getElementById('claudeKeyInput').value='••••••••••••••••••••';document.getElementById('claudeStatus').textContent='✓ Saved';document.getElementById('claudeStatus').style.color='var(--green)';loadBrief();}
+function saveGeminiKey(){const v=document.getElementById('geminiKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_gemini_key',v);geminiKey=v;document.getElementById('geminiKeyInput').value='••••••••••••••••••••';document.getElementById('geminiStatus').textContent='✓ Saved';document.getElementById('geminiStatus').style.color='var(--green)';}
+function saveGroqKey(){const v=document.getElementById('groqKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_groq_key',v);groqKey=v;document.getElementById('groqKeyInput').value='••••••••••••••••••••';document.getElementById('groqStatus').textContent='✓ Saved';document.getElementById('groqStatus').style.color='var(--green)';}
+function saveDeepseekKey(){const v=document.getElementById('deepseekKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_deepseek_key',v);deepseekKey=v;document.getElementById('deepseekKeyInput').value='••••••••••••••••••••';document.getElementById('deepseekStatus').textContent='✓ Saved';document.getElementById('deepseekStatus').style.color='var(--green)';}
 function saveNewsKey(){const v=document.getElementById('newsKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_news_key',v);newsKey=v;document.getElementById('newsKeyInput').value='••••••••••••••••••••';document.getElementById('newsStatus').textContent='✓ Saved';document.getElementById('newsStatus').style.color='var(--green)';loadAllNews();}
-function checkClaudeKey(){if(!claudeKey){alert('Add your Claude API key in Setup tab.');return false;}return true;}
+
+function setProvider(provider, btn){
+  activeProvider=provider;
+  localStorage.setItem('bcis_provider',provider);
+  document.querySelectorAll('.provider-pill').forEach(p=>{p.style.background='none';p.style.borderColor='#1e1e1e';p.style.color='#555';});
+  if(btn){btn.style.background='#C8A96E18';btn.style.borderColor='#C8A96E';btn.style.color='#C8A96E';}
+  const label={claude:'Claude',gemini:'Gemini',groq:'Llama via Groq',deepseek:'DeepSeek'}[provider];
+  const el=document.getElementById('providerActive'); if(el) el.textContent='Active: '+label;
+}
+
+function highlightActiveProvider(){
+  document.querySelectorAll('.provider-pill').forEach(p=>{
+    if(p.dataset.provider===activeProvider){
+      p.style.background='#C8A96E18';p.style.borderColor='#C8A96E';p.style.color='#C8A96E';
+    } else {
+      p.style.background='none';p.style.borderColor='#1e1e1e';p.style.color='#555';
+    }
+  });
+  const label={claude:'Claude',gemini:'Gemini',groq:'Llama via Groq',deepseek:'DeepSeek'}[activeProvider];
+  const el=document.getElementById('providerActive'); if(el) el.textContent='Active: '+label;
+}
+
+function checkClaudeKey(){
+  const hasKey={claude:claudeKey,gemini:geminiKey,groq:groqKey,deepseek:deepseekKey}[activeProvider];
+  if(!hasKey){
+    const name={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider];
+    alert('No '+name+' API key found. Add one in the Setup tab, or switch providers there.');
+    return false;
+  }
+  return true;
+}
 
 // ============ LIVE NEWS ============
 async function loadAllNews() {
@@ -967,11 +1044,68 @@ function logPerformance(){
 
 // ============ API ============
 async function callAPI(userMsg){
+  switch(activeProvider){
+    case 'gemini': return callGemini(userMsg);
+    case 'groq': return callGroq(userMsg);
+    case 'deepseek': return callDeepseek(userMsg);
+    default: return callClaude(userMsg);
+  }
+}
+
+async function callClaude(userMsg){
+  if(!claudeKey) throw new Error('No Claude API key. Add one in Setup.');
   const body={model:'claude-sonnet-4-20250514',max_tokens:1000,system:DNA,messages:[{role:'user',content:userMsg}]};
   const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
   const data=await res.json();
-  if(data.error)throw new Error(data.error.message);
+  if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
   return data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+
+async function callGemini(userMsg){
+  if(!geminiKey) throw new Error('No Gemini API key. Add one in Setup (free at aistudio.google.com/apikey).');
+  const body={
+    systemInstruction:{parts:[{text:DNA}]},
+    contents:[{role:'user',parts:[{text:userMsg}]}],
+    generationConfig:{maxOutputTokens:1000}
+  };
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+geminiKey,{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+  });
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+  const cand=data.candidates&&data.candidates[0];
+  if(!cand||!cand.content) throw new Error('Gemini returned no content — try again.');
+  return cand.content.parts.map(p=>p.text).join('\n');
+}
+
+async function callGroq(userMsg){
+  if(!groqKey) throw new Error('No Groq API key. Add one in Setup (free at console.groq.com/keys).');
+  const body={
+    model:'llama-3.3-70b-versatile',
+    messages:[{role:'system',content:DNA},{role:'user',content:userMsg}],
+    max_tokens:1000
+  };
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},body:JSON.stringify(body)
+  });
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+  return data.choices[0].message.content;
+}
+
+async function callDeepseek(userMsg){
+  if(!deepseekKey) throw new Error('No DeepSeek API key. Add one in Setup (platform.deepseek.com).');
+  const body={
+    model:'deepseek-chat',
+    messages:[{role:'system',content:DNA},{role:'user',content:userMsg}],
+    max_tokens:1000
+  };
+  const res=await fetch('https://api.deepseek.com/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+deepseekKey},body:JSON.stringify(body)
+  });
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
+  return data.choices[0].message.content;
 }
 
 // ============ HELPERS ============
