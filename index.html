@@ -176,6 +176,15 @@ input:focus{outline:none;border-color:var(--gold)}
     <button class="pill" onclick="setPillar('global',this)">◬ Global</button>
   </div>
 
+  <div class="sec">Company Reference — Off Unless You Choose One</div>
+  <div class="pill-row" id="companyRow">
+    <button class="pill company-pill" style="border-color:#7AC8A0;color:#7AC8A0;background:#7AC8A018" data-company="none" onclick="setCompany('none',this)">None (default)</button>
+    <button class="pill company-pill" data-company="ibm" onclick="setCompany('ibm',this)">IBM</button>
+    <button class="pill company-pill" data-company="toyota" onclick="setCompany('toyota',this)">Toyota</button>
+    <button class="pill company-pill" data-company="unionpacific" onclick="setCompany('unionpacific',this)">Union Pacific</button>
+    <button class="pill company-pill" data-company="hallmark" onclick="setCompany('hallmark',this)">Hallmark / Xoriant</button>
+  </div>
+
   <div class="sec">02 · Topic Source</div>
   <div class="source-tabs">
     <button class="source-tab active" onclick="setSrcTab('seeds',this)">◈ POWER TOPICS</button>
@@ -446,21 +455,9 @@ CRITICAL RULE: Only write content based on what Balaji has actually done. Never 
 
 GOAL — BE HONEST ABOUT THIS: The target is the LinkedIn Top Voice blue badge (invite-only, awarded on content quality, originality, consistency, trust — not follower count) within 6-9 months, and steady compounding niche authority growth. NOT rapid follower-count chasing — that is not how LinkedIn works and any content implying "going viral fast" is off-strategy.
 
-VERIFIED IDENTITY: Director AI/ML Ops. 17+ years. First-generation graduate India. PMP CSM ITIL Six Sigma Green Belt NLP Diplomat Practitioner 2010.
+VERIFIED IDENTITY: Director AI/ML Ops. 17+ years enterprise experience across Fortune 100 companies. First-generation graduate India. PMP CSM ITIL Six Sigma Green Belt NLP Diplomat Practitioner 2010. Visa consulting side business.
 
-VERIFIED CAREER — EQUALLY SPECIFIC DETAIL PER COMPANY, ROTATE ACROSS THESE, DO NOT DEFAULT TO ANY ONE:
-
-IBM (Delivery Lead, DIRECTV/AT&T account, 2012-2015): Managed IBM offshore teams across India and Brazil from client location. Led eCommerce application integration for the DirecTV and LifeShield acquisition/merger. Certified integration testing for Salesforce, SAP, DWS and Telco partners during the DirecTV-AT&T merger. Won SPARK award for quality delivery and innovation (2013), Manager's Favorite and Customer Experience Award (2014), Delivery Excellence Award for 4G/LTE mobile device testing.
-
-Toyota Financial Services (Senior Technical Program Manager, 7 years, 2015-2022): Managed delivery for 20+ applications across Accounting, Treasury and Tax factories. Onboarded DevOps and CI/CD pipeline for the Treasury and Accounting/Tax agile factory. Led Salesforce implementation for the Treasury business and migrated applications to AWS. As Program QA Manager, was single point of contact for mainframe-to-cloud migration testing on a system handling approximately $10 billion in transactions. Saved the company over $250K in project costs through execution oversight. Won first prize in Toyota's JKK process improvement initiative, personally recognized by Toyota's CEO.
-
-Union Pacific Railroad (Director Cloud Data Platform and AI/ML Ops, 2022-2023): Led Teradata to Snowflake migration, $2M annual savings, 30% customer satisfaction increase, 50% model dev time reduction, 25% reduction in downtime through monitoring implementation. This is ONE verified example among several, not the default — use it only when it is the most relevant story to the topic, not automatically.
-
-Hallmark / Xoriant (IT Director, digital transformation, 2024-present): Leading migration from MicroStrategy to Power BI plus Power BI Co-Pilot rollout. Driving agile transformation from ADO to a modern framework. Managing a multi-geographic team of approximately 20 across Data Engineering and Advanced Analytics. Leading separate Tableau cloud migration and SAS modernization projects. Working directly with Microsoft, TCS, Salesforce and Infosys on the technology roadmap.
-
-INSTRUCTION: Vary which company anchors each post based on genuine topical fit, not habit. Do not open every post with Union Pacific by default — treat all four employers as equally available, equally verified material.
-
-Visa consulting side business.
+DO NOT NAME A SPECIFIC EMPLOYER. Credibility comes from "17 years leading enterprise data and AI platforms," "having sat in the room for a dozen cloud migrations," etc — general, true, and verifiable without naming a company. A specific company will only be supplied separately if the user explicitly chose to include one for this post.
 
 REAL VOICE EXAMPLES — LEARNED FROM 6 ACTUAL BALAJI POSTS. Match this pattern, not a description of it:
 
@@ -490,7 +487,24 @@ CORE BELIEFS — D side must show: AI is corporate buzzword most orgs zero real 
 
 VOICE: No long dashes. No corporate speak. No rapidly evolving game-changer excited to share. Show the D — blunt operator truths backed by real experience. Short punchy lines. 220-270 words.
 
-POST STRUCTURE Operator Arc: Line 1 counterintuitive blunt hook. Lines 2-3 permission real company real role real verified moment. Para 2 specific verified story real detail. Para 3 system pattern only 17yr operator sees. Para 4 named lesson bold quotable. Close specific question + 4-5 hashtags.`;
+CRITICAL RULE ON NAMING COMPANIES: Do NOT name a specific employer (IBM, Toyota, Union Pacific, Hallmark, Xoriant) by default. Credibility can come from years of experience, role, or general industry pattern-recognition without naming an employer. Only include a named company if it is explicitly supplied in the request for this specific post. Absence of a company name is the default and correct state, not a gap to fill in.
+
+POST STRUCTURE — TWO MODES, USE THE ONE THAT MATCHES THE REQUEST:
+
+MODE A — Operator Reflection (for Power Topics / Brain Dump): Line 1 counterintuitive blunt hook. Lines 2-3 brief credibility from years/role in general terms, NO company name unless one was explicitly supplied. Para 2 specific verified story or pattern, real detail, no fabrication. Para 3 system-level pattern only an experienced operator sees. Para 4 named lesson, bold, quotable. Close with a specific question plus 4-5 hashtags.
+
+MODE B — Live News Commentary (for reacting to a real news story): This is Balaji giving HIS TAKE as an informed industry voice, not a personal narrative post. Line 1: state the news development plainly and briefly. Para 1: what most people are getting wrong or missing about it. Para 2: Balaji's actual analysis — why it matters, what it signals, informed by his real operator pattern-recognition, WITHOUT inventing a personal anecdote or claiming direct involvement unless explicitly true. Para 3: the implication for people in enterprise AI/leadership. Close with a genuine question inviting discussion plus 4-5 hashtags. No forced "this reminds me of my time at X" — only include a personal connection if it is real, specific, and explicitly supplied.`;
+
+// Company detail blocks — NEVER included by default. Only appended to the
+// system prompt when the user explicitly selects one in the Post Engine.
+const COMPANY_DETAILS = {
+  none: '',
+  ibm: `\n\nCOMPANY DETAIL EXPLICITLY REQUESTED FOR THIS POST — IBM (Delivery Lead, DIRECTV/AT&T account, 2012-2015): Managed IBM offshore teams across India and Brazil from client location. Led eCommerce application integration for the DirecTV and LifeShield acquisition/merger. Certified integration testing for Salesforce, SAP, DWS and Telco partners during the DirecTV-AT&T merger. Won SPARK award for quality delivery and innovation (2013), Manager's Favorite and Customer Experience Award (2014), Delivery Excellence Award for 4G/LTE mobile device testing. Use this detail naturally since the user explicitly chose to reference this company for this post.`,
+  toyota: `\n\nCOMPANY DETAIL EXPLICITLY REQUESTED FOR THIS POST — Toyota Financial Services (Senior Technical Program Manager, 7 years, 2015-2022): Managed delivery for 20+ applications across Accounting, Treasury and Tax factories. Onboarded DevOps and CI/CD pipeline for the Treasury and Accounting/Tax agile factory. Led Salesforce implementation for the Treasury business and migrated applications to AWS. As Program QA Manager, was single point of contact for mainframe-to-cloud migration testing on a system handling approximately $10 billion in transactions. Saved the company over $250K in project costs. Won first prize in Toyota's JKK process improvement initiative, personally recognized by Toyota's CEO. Use this detail naturally since the user explicitly chose to reference this company for this post.`,
+  unionpacific: `\n\nCOMPANY DETAIL EXPLICITLY REQUESTED FOR THIS POST — Union Pacific Railroad (Director Cloud Data Platform and AI/ML Ops, 2022-2023): Led Teradata to Snowflake migration, $2M annual savings, 30% customer satisfaction increase, 50% model dev time reduction, 25% reduction in downtime through monitoring implementation. Use this detail naturally since the user explicitly chose to reference this company for this post.`,
+  hallmark: `\n\nCOMPANY DETAIL EXPLICITLY REQUESTED FOR THIS POST — Hallmark / Xoriant (IT Director, digital transformation, 2024-present): Leading migration from MicroStrategy to Power BI plus Power BI Co-Pilot rollout. Driving agile transformation from ADO to a modern framework. Managing a multi-geographic team of approximately 20 across Data Engineering and Advanced Analytics. Leading separate Tableau cloud migration and SAS modernization projects. Working directly with Microsoft, TCS, Salesforce and Infosys. Use this detail naturally since the user explicitly chose to reference this company for this post.`
+};
+let activeCompany = 'none';
 
 // ============ STATE ============
 let claudeKey = localStorage.getItem('bcis_claude_key') || '';
@@ -753,7 +767,7 @@ function setSrcTabDirect(tab) {
 
 function genFromLiveTopic() {
   if(!selectedLiveTopic) return;
-  generate(selectedLiveTopic.title+'. '+selectedLiveTopic.desc, selectedLiveTopic.pillar||'operator');
+  generate(selectedLiveTopic.title+'. '+selectedLiveTopic.desc, selectedLiveTopic.pillar||'operator', 'commentary');
 }
 
 // ============ BRIEF ============
@@ -822,6 +836,13 @@ function setPillar(type, btn) {
   renderSeeds();
 }
 
+function setCompany(company, btn) {
+  activeCompany = company;
+  document.querySelectorAll('.company-pill').forEach(b=>{b.style.background='none';b.style.borderColor='#1e1e1e';b.style.color='#555';});
+  const color = company==='none' ? '#7AC8A0' : '#C8A96E';
+  btn.style.background=color+'18';btn.style.borderColor=color;btn.style.color=color;
+}
+
 function setSrcTab(tab, btn) {
   activeSrcTab=tab;
   document.querySelectorAll('.source-tab').forEach(t=>t.classList.remove('active'));
@@ -842,7 +863,7 @@ function renderSeeds() {
 
 function genFromCustom(){const v=document.getElementById('customInput').value.trim();if(!v)return;generate(v,activePillar||'operator');}
 
-async function generate(topicText, typeId) {
+async function generate(topicText, typeId, mode) {
   if(!checkClaudeKey()) return;
   hideErr('genErr');
   document.getElementById('genLoading').style.display='block';
@@ -852,14 +873,27 @@ async function generate(topicText, typeId) {
 
   const typeLabel={operator:'Operator Truth',story:'Human Story',data:'Data Reframe',culture:'Culture Insight',firstgen:'First Gen Voice',global:'Global Vision'}[typeId]||'Operator Truth';
   const newsCtx = allNewsItems.slice(0,3).map(n=>n.title).join(' | ');
+  const isCommentary = mode === 'commentary';
+  const systemPrompt = DNA + (COMPANY_DETAILS[activeCompany] || '');
 
   try {
-    const [p1,p2,p3,hashRaw]=await Promise.all([
-      callAPI(`Write a LinkedIn post for Balaji Veeramani using Contrast and Blunt Truth angle. Show his D personality — blunt operator truth. Post type: ${typeLabel}. Topic: ${topicText}. ${newsCtx?'Current news context: '+newsCtx:''} Use ONLY verified experience. Operator Arc. 220-270 words. Return ONLY post text.`),
-      callAPI(`Write a LinkedIn post for Balaji Veeramani using Personal Story Arc angle. Show his I personality — warm human authentic. Post type: ${typeLabel}. Topic: ${topicText}. Use ONLY verified personal stories. Operator Arc. 220-270 words. Return ONLY post text.`),
-      callAPI(`Write a LinkedIn post for Balaji Veeramani using Insider Operator View angle. Blend both I and D. Post type: ${typeLabel}. Topic: ${topicText}. Draw on verified 17yr career. Operator Arc. 220-270 words. Return ONLY post text.`),
-      callAPI(`Generate the best LinkedIn hashtags for March 2026 for a post about: ${topicText}. Author is enterprise AI operator first-gen immigrant. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`)
-    ]);
+    let calls;
+    if(isCommentary){
+      calls = [
+        callAPI(`MODE B — Live News Commentary. Write Balaji's genuine take on this real news story: ${topicText}. This is HIS ANALYSIS as an informed industry voice, not a personal narrative post. Do not force a personal anecdote. State the development, what people are missing, his real analysis, the implication for enterprise AI/leadership readers. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary, alternate angle. Write Balaji's take on this real news story: ${topicText}. Slightly more contrarian framing than a typical reaction — what's the counterintuitive read here? No forced personal story. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary, third angle. Write Balaji's take on this real news story: ${topicText}. Frame it through pattern-recognition from years in enterprise AI/data leadership, in general terms, without naming a specific employer unless one was explicitly requested. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`Generate the best LinkedIn hashtags for a commentary post about: ${topicText}. Author is an enterprise AI operator giving an informed industry take. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`, systemPrompt)
+      ];
+    } else {
+      calls = [
+        callAPI(`MODE A — Operator Reflection. Write a LinkedIn post for Balaji Veeramani using Contrast and Blunt Truth angle. Show his D personality — blunt operator truth. Post type: ${typeLabel}. Topic: ${topicText}. ${newsCtx?'Current news context (for awareness only, not to force a company anecdote): '+newsCtx:''} Use ONLY verified experience. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE A — Operator Reflection. Write a LinkedIn post for Balaji Veeramani using Personal Story Arc angle. Show his I personality — warm human authentic. Post type: ${typeLabel}. Topic: ${topicText}. Use ONLY verified personal stories. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE A — Operator Reflection. Write a LinkedIn post for Balaji Veeramani using Insider Operator View angle. Blend both I and D. Post type: ${typeLabel}. Topic: ${topicText}. Draw on verified 17yr career in general terms. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`Generate the best LinkedIn hashtags for March 2026 for a post about: ${topicText}. Author is enterprise AI operator first-gen immigrant. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`, systemPrompt)
+      ];
+    }
+    const [p1,p2,p3,hashRaw]=await Promise.all(calls);
 
     let hashData={hashtags:['#AIinEnterprise','#DataCulture','#Leadership','#MLOps','#AITransformation','#OperatorLessons','#FirstGenInTech','#FutureOfWork'],bestTime:'Tue–Thu 7–9am',viralTip:'Reply to every comment within 60 minutes to trigger algorithmic boost.'};
     try{const hs=hashRaw.indexOf('{'),he=hashRaw.lastIndexOf('}')+1;if(hs!==-1)hashData=JSON.parse(hashRaw.slice(hs,he));}catch(e){}
@@ -1058,28 +1092,29 @@ function logPerformance(){
 }
 
 // ============ API ============
-async function callAPI(userMsg){
+async function callAPI(userMsg, systemPrompt){
+  const sys = systemPrompt || DNA;
   switch(activeProvider){
-    case 'gemini': return callGemini(userMsg);
-    case 'groq': return callGroq(userMsg);
-    case 'deepseek': return callDeepseek(userMsg);
-    default: return callClaude(userMsg);
+    case 'gemini': return callGemini(userMsg, sys);
+    case 'groq': return callGroq(userMsg, sys);
+    case 'deepseek': return callDeepseek(userMsg, sys);
+    default: return callClaude(userMsg, sys);
   }
 }
 
-async function callClaude(userMsg){
+async function callClaude(userMsg, sys){
   if(!claudeKey) throw new Error('No Claude API key. Add one in Setup.');
-  const body={model:'claude-sonnet-4-20250514',max_tokens:1000,system:DNA,messages:[{role:'user',content:userMsg}]};
+  const body={model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys||DNA,messages:[{role:'user',content:userMsg}]};
   const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
   const data=await res.json();
   if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
   return data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
 }
 
-async function callGemini(userMsg){
+async function callGemini(userMsg, sys){
   if(!geminiKey) throw new Error('No Gemini API key. Add one in Setup (free at aistudio.google.com/apikey).');
   const body={
-    systemInstruction:{parts:[{text:DNA}]},
+    systemInstruction:{parts:[{text:sys||DNA}]},
     contents:[{role:'user',parts:[{text:userMsg}]}],
     generationConfig:{maxOutputTokens:1000}
   };
@@ -1093,11 +1128,11 @@ async function callGemini(userMsg){
   return cand.content.parts.map(p=>p.text).join('\n');
 }
 
-async function callGroq(userMsg){
+async function callGroq(userMsg, sys){
   if(!groqKey) throw new Error('No Groq API key. Add one in Setup (free at console.groq.com/keys).');
   const body={
     model:'llama-3.3-70b-versatile',
-    messages:[{role:'system',content:DNA},{role:'user',content:userMsg}],
+    messages:[{role:'system',content:sys||DNA},{role:'user',content:userMsg}],
     max_tokens:1000
   };
   const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -1108,11 +1143,11 @@ async function callGroq(userMsg){
   return data.choices[0].message.content;
 }
 
-async function callDeepseek(userMsg){
+async function callDeepseek(userMsg, sys){
   if(!deepseekKey) throw new Error('No DeepSeek API key. Add one in Setup (platform.deepseek.com).');
   const body={
     model:'deepseek-chat',
-    messages:[{role:'system',content:DNA},{role:'user',content:userMsg}],
+    messages:[{role:'system',content:sys||DNA},{role:'user',content:userMsg}],
     max_tokens:1000
   };
   const res=await fetch('https://api.deepseek.com/chat/completions',{
