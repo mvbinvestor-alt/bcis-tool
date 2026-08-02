@@ -834,17 +834,19 @@ async function loadBrief() {
 
 ${newsContext ? `Real news happening right now: ${newsContext}` : ''}
 
-Based on these real stories and current trends in March 2026, generate 3 highly specific content recommendations using the 4-3-2-1 blend formula. Each must be something Balaji can authentically speak to from his verified 17-year career.
+Based on these real stories and current trends, generate 3 highly specific content recommendations using the 4-3-2-1 blend formula. Each must be something Balaji can authentically speak to from his verified 17-year enterprise career. Do NOT name a specific employer by default — general terms like "17 years leading enterprise data platforms" are correct, a named company only if truly essential to a specific verified story (like his father's transport business connecting to Union Pacific).
 
 Return ONLY valid JSON array:
-[{"type":"AI","day":"Today","topic":"Specific topic Balaji can authentically comment on","angle":"Unique operator angle using ONLY his verified experience at IBM Toyota Union Pacific"},{"type":"Leadership","day":"Thursday","topic":"Leadership topic","angle":"His blunt D truth from real experience"},{"type":"Human Story","day":"Saturday","topic":"Human story angle","angle":"How his real personal story connects"}]`);
+[{"type":"AI","day":"Today","topic":"Specific topic Balaji can authentically comment on","angle":"Unique operator angle from his general enterprise experience, no company name by default"},{"type":"Leadership","day":"Thursday","topic":"Leadership topic","angle":"A warm, genuine truth from real experience"},{"type":"Human Story","day":"Saturday","topic":"Human story angle","angle":"How his real personal story connects"}]`);
     const s=raw.indexOf('['),e=raw.lastIndexOf(']')+1;
-    if(s===-1) throw new Error('parse');
+    if(s===-1) throw new Error('AI response was not valid JSON — got: '+raw.slice(0,150));
     renderBriefRecs(JSON.parse(raw.slice(s,e)));
     document.getElementById('lastFetched').textContent='Updated from live news: '+new Date().toLocaleTimeString();
   } catch(e) {
+    const providerLabel={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider]||'your provider';
+    showErr('briefErr','Live generation failed via '+providerLabel+': '+e.message+'. Showing curated fallback below — check your '+providerLabel+' account/key in Setup.');
     renderBriefRecs(STATIC_RECS);
-    document.getElementById('lastFetched').textContent='Using curated recommendations';
+    document.getElementById('lastFetched').textContent='Using curated recommendations (AI call failed — see error above)';
   }
   btn.disabled=false;
   btn.innerHTML='⟳ Refresh Recommendations';
