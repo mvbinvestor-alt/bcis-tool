@@ -978,7 +978,8 @@ async function generate(topicText, typeId, mode) {
     updateStats();
   } catch(e) {
     document.getElementById('genLoading').style.display='none';
-    showErr('genErr','Generation failed: '+e.message+'. Check Claude API key in Setup.');
+    const providerLabel={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider]||'your provider';
+    showErr('genErr','Generation failed via '+providerLabel+': '+e.message+'. Check your '+providerLabel+' account/key in Setup.');
   }
 }
 
