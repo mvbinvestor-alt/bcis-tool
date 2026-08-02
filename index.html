@@ -1,1 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BCIS v5 · Balaji Command Center</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #C8A96E; --green: #7AC8A0; --blue: #7EB8D4;
+  --purple: #9B8EC8; --coral: #C8956E; --pink: #C47EB8;
+  --bg: #080808; --bg2: #0D0D0D; --bg3: #131313;
+  --border: #1e1e1e; --border2: #141414;
+  --text: #F0E8D8; --muted: #C0B0A0; --dim: #555; --faint: #2a2a2a;
+}
+body { font-family: Georgia,'Times New Roman',serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-text-size-adjust: 100%; }
+.nav { position: sticky; top: 0; z-index: 100; background: #050505; border-bottom: 1px solid var(--border2); }
+.nav-inner { max-width: 900px; margin: 0 auto; padding: 10px 14px 0; }
+.nav-brand { font-size: 8px; letter-spacing: 4px; color: var(--faint); font-family: monospace; margin-bottom: 6px; }
+.nav-tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--dim); padding: 8px 12px; cursor: pointer; font-family: monospace; font-size: 9px; letter-spacing: 1px; white-space: nowrap; transition: all 0.15s; }
+.nav-tab.active { border-bottom-color: var(--gold); color: var(--gold); }
+.page { display: none; max-width: 900px; margin: 0 auto; padding: 16px 14px 60px; }
+.page.active { display: block; }
+.sec { font-size: 8px; letter-spacing: 4px; color: var(--gold); font-family: monospace; margin: 20px 0 10px; text-transform: uppercase; }
+.sec:first-child { margin-top: 0; }
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.err { background: #1a0808; border: 1px solid #3a1010; border-radius: 6px; padding: 10px 14px; color: #C47878; font-family: monospace; font-size: 11px; margin-bottom: 10px; display: none; }
+.btn { border: none; padding: 11px 18px; border-radius: 6px; font-size: 10px; font-family: monospace; letter-spacing: 2px; cursor: pointer; font-weight: 700; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-gold { background: var(--gold); color: var(--bg); }
+.btn-gold:disabled { background: var(--bg3); color: var(--dim); cursor: not-allowed; }
+.btn-outline { background: var(--bg2); border: 1px solid var(--border); color: var(--text); }
+.btn-full { width: 100%; justify-content: center; }
+.dots { display: inline-flex; gap: 4px; align-items: center; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: blink 1.2s infinite; opacity: 0.3; }
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}.dot:nth-child(4){animation-delay:.6s}.dot:nth-child(5){animation-delay:.8s}
+@keyframes blink{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+textarea { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:6px; color:var(--muted); padding:12px; font-size:13px; font-family:Georgia,serif; line-height:1.7; min-height:100px; resize:none; }
+textarea:focus{outline:none;border-color:var(--gold)}
+input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--muted); padding:11px 14px; font-size:13px; font-family:monospace; margin-bottom:10px; }
+input:focus{outline:none;border-color:var(--gold)}
+.pill-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.pill { background:none; border:1px solid var(--border); color:var(--dim); padding:6px 12px; border-radius:99px; font-size:10px; cursor:pointer; font-family:monospace; transition:all 0.15s; white-space:nowrap; }
+.divider { border:none; border-top:1px solid var(--border2); margin:16px 0; }
+.source-tabs { display:flex; border-bottom:1px solid var(--border2); margin-bottom:14px; }
+.source-tab { background:none; border:none; border-bottom:2px solid transparent; color:var(--dim); padding:8px 12px; cursor:pointer; font-family:monospace; font-size:9px; letter-spacing:2px; transition:all 0.15s; white-space:nowrap; }
+.source-tab.active { border-bottom-color:var(--gold); color:var(--gold); }
+.news-card { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+.news-card:active{transform:scale(.98)}
+.news-source { font-size:9px; color:var(--gold); font-family:monospace; letter-spacing:2px; margin-bottom:5px; }
+.news-title { font-size:13px; color:var(--text); line-height:1.4; margin-bottom:6px; }
+.news-desc { font-size:11px; color:var(--dim); font-family:monospace; line-height:1.5; margin-bottom:8px; }
+.news-angle { font-size:11px; color:var(--muted); font-style:italic; border-left:2px solid var(--gold); padding-left:8px; line-height:1.5; margin-bottom:8px; }
+.news-btn { width:100%; background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:10px; cursor:pointer; font-family:monospace; }
+.variant-card { background:#0A0A0A; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:12px; }
+.variant-header { padding:10px 14px; border-bottom:1px solid var(--border2); display:flex; justify-content:space-between; align-items:center; }
+.variant-body { padding:14px; font-size:13px; color:var(--muted); line-height:2; white-space:pre-wrap; min-height:140px; }
+.variant-footer { padding:10px 14px; border-top:1px solid var(--border2); display:flex; gap:8px; }
+.copy-btn { border:none; padding:10px; border-radius:6px; font-size:9px; font-family:monospace; letter-spacing:2px; cursor:pointer; font-weight:700; transition:all 0.2s; }
+.stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px; }
+.stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center; }
+.stat-num { font-size:26px; font-weight:500; color:var(--gold); }
+.stat-lbl { font-size:9px; color:var(--dim); font-family:monospace; margin-top:3px; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:14px; }
+.cal-day { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:8px 4px; text-align:center; cursor:pointer; }
+.cal-day.posted { border-color:var(--green); background:#0a1a0a; }
+.cal-day.today-cal { border-color:var(--gold); }
+.live-indicator { display:inline-flex; align-items:center; gap:6px; font-size:9px; color:var(--green); font-family:monospace; }
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse-live 2s infinite; }
+@keyframes pulse-live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.source-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; padding:2px 8px; border-radius:99px; font-family:monospace; }
+.seeds-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; margin-bottom:14px; }
+.seed-card { background:var(--bg2); border:1px solid #1a1a1a; border-radius:6px; padding:12px; cursor:pointer; transition:all 0.15s; }
+.seed-card:active{transform:scale(.98)}
+.loading-center { text-align:center; padding:32px 20px; }
+@media(max-width:480px){ .stat-grid{grid-template-columns:repeat(2,1fr)} .seeds-grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
 
+<div class="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">BCIS v5.0 · LIVE INTELLIGENCE · BALAJI COMMAND CENTER</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('brief',this)">📋 BRIEF</button>
+      <button class="nav-tab" onclick="showPage('live',this)">🔴 LIVE NEWS</button>
+      <button class="nav-tab" onclick="showPage('engine',this)">✍️ POST ENGINE</button>
+      <button class="nav-tab" onclick="showPage('calendar',this)">📅 CALENDAR</button>
+      <button class="nav-tab" onclick="showPage('visuals',this)">🎨 VISUALS</button>
+      <button class="nav-tab" onclick="showPage('analytics',this)">📊 ANALYTICS</button>
+      <button class="nav-tab" onclick="showPage('setup',this)">⚙️ SETUP</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== BRIEF ======== -->
+<div class="page active" id="page-brief">
+  <div style="margin-bottom:16px">
+    <div style="font-size:9px;letter-spacing:4px;color:var(--faint);font-family:monospace;margin-bottom:4px">BCIS · DAILY BRIEF</div>
+    <div style="font-size:20px;color:var(--text)" id="todayDate"></div>
+    <div style="font-size:11px;color:var(--dim);font-family:monospace;margin-top:2px" id="todayAdvice"></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <div class="live-indicator"><div class="live-dot"></div>LIVE NEWS CONNECTED</div>
+    <span style="font-size:9px;color:var(--dim);font-family:monospace" id="liveStatus">Fetching...</span>
+  </div>
+
+  <div class="sec">Weekly Blend — 4·3·2·1 Formula</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+    <div style="background:#0a1520;border-radius:8px;padding:10px 6px;text-align:center"><div style="font-size:22px;font-weight:500;color:#7EB8D4">4</div><div style="font-size:9px;color:#7EB8D4;margin-top:2px;line-height:1.3">AI Enterprise</div></div>
+    <div style="background:#1a1000;border-radius:8px;padding:10px 6px;text-align:center"><div style="font-size:22px;font-weight:500;color:#C8A96E">3</div><div style="font-size:9px;color:#C8A96E;margin-top:2px;line-height:1.3">Leadership</div></div>
+    <div style="background:#0a1a0a;border-radius:8px;padding:10px 6px;text-align:center"><div style="font-size:22px;font-weight:500;color:#7AC8A0">2</div><div style="font-size:9px;color:#7AC8A0;margin-top:2px;line-height:1.3">Human Story</div></div>
+    <div style="background:#1a0a00;border-radius:8px;padding:10px 6px;text-align:center"><div style="font-size:22px;font-weight:500;color:#C8956E">1</div><div style="font-size:9px;color:#C8956E;margin-top:2px;line-height:1.3">Global</div></div>
+  </div>
+
+  <div class="sec">Today's Posting Schedule</div>
+  <div class="card" id="todaySchedule" style="font-size:12px;font-family:monospace;line-height:2;color:var(--muted)">Loading...</div>
+
+  <div class="divider"></div>
+  <button class="btn btn-gold btn-full" id="briefBtn" onclick="loadBrief()" style="margin-bottom:8px">⟳ Generate Today's Recommendations</button>
+  <div style="font-size:9px;color:var(--faint);font-family:monospace;text-align:center;margin-bottom:14px" id="lastFetched"></div>
+  <div class="err" id="briefErr"></div>
+  <div id="briefRecs"></div>
+</div>
+
+<!-- ======== LIVE NEWS ======== -->
+<div class="page" id="page-live">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:20px;color:var(--text);margin-bottom:2px">Live News Intelligence</div>
+      <div class="live-indicator"><div class="live-dot"></div>Real feeds · Updated now</div>
+    </div>
+    <button class="btn btn-gold" id="newsRefreshBtn" onclick="loadAllNews()">⟳ Refresh All</button>
+  </div>
+
+  <div class="sec">Filter by Pillar</div>
+  <div class="pill-row" id="newsPillarRow">
+    <button class="pill" style="border-color:#444;color:#F0E8D8;background:#1a1a1a" onclick="filterNews(null,this)">ALL</button>
+    <button class="pill" onclick="filterNews('ai',this)">◈ AI</button>
+    <button class="pill" onclick="filterNews('leadership',this)">◎ Leadership</button>
+    <button class="pill" onclick="filterNews('data',this)">▣ Data</button>
+    <button class="pill" onclick="filterNews('global',this)">◬ Global</button>
+    <button class="pill" onclick="filterNews('firstgen',this)">◇ First Gen</button>
+  </div>
+
+  <div class="sec">Live Sources</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+    <span class="source-badge" style="background:#1a0a20;color:#9B8EC8;border:1px solid #9B8EC833">📰 NewsAPI</span>
+    <span class="source-badge" style="background:#0a1520;color:#7EB8D4;border:1px solid #7EB8D433">🔥 HackerNews</span>
+    <span class="source-badge" style="background:#1a0a00;color:#C8956E;border:1px solid #C8956E33">📡 Google News</span>
+    <span class="source-badge" style="background:#0a1a0a;color:#7AC8A0;border:1px solid #7AC8A033">💬 Reddit</span>
+    <span class="source-badge" style="background:#1a1000;color:#C8A96E;border:1px solid #C8A96E33">⚡ Dev.to</span>
+  </div>
+
+  <div class="err" id="newsErr"></div>
+  <div id="newsLoading" class="loading-center" style="display:none">
+    <div class="dots" style="justify-content:center"><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span></div>
+    <div style="font-size:10px;color:var(--dim);font-family:monospace;letter-spacing:3px;margin-top:12px">FETCHING LIVE NEWS...</div>
+    <div style="font-size:10px;color:var(--faint);font-family:monospace;margin-top:4px">NewsAPI · HackerNews · Reddit · Dev.to</div>
+  </div>
+  <div id="newsGrid"></div>
+</div>
+
+<!-- ======== POST ENGINE ======== -->
+<div class="page" id="page-engine">
+  <div class="sec">01 · Content Pillar</div>
+  <div class="pill-row" id="pillarRow">
+    <button class="pill" style="border-color:#444;color:#F0E8D8;background:#1a1a1a" onclick="setPillar(null,this)">ALL</button>
+    <button class="pill" onclick="setPillar('operator',this)">◈ Operator</button>
+    <button class="pill" onclick="setPillar('story',this)">◉ Story</button>
+    <button class="pill" onclick="setPillar('data',this)">▣ Data</button>
+    <button class="pill" onclick="setPillar('culture',this)">◎ Culture</button>
+    <button class="pill" onclick="setPillar('firstgen',this)">◇ First Gen</button>
+    <button class="pill" onclick="setPillar('global',this)">◬ Global</button>
+  </div>
+
+  <div class="sec">02 · Topic Source</div>
+  <div class="source-tabs">
+    <button class="source-tab active" onclick="setSrcTab('seeds',this)">◈ POWER TOPICS</button>
+    <button class="source-tab" onclick="setSrcTab('custom',this)">✎ BRAIN DUMP</button>
+    <button class="source-tab" onclick="setSrcTab('live',this)">🔴 FROM LIVE NEWS</button>
+  </div>
+
+  <div id="srcSeeds"><div class="seeds-grid" id="seedsGrid"></div></div>
+
+  <div id="srcCustom" style="display:none">
+    <textarea id="customInput" placeholder="Brain dump. Raw thought. Meeting frustration. Observation from this week. Real experience only — no fabrication..."></textarea>
+    <button class="btn btn-gold" onclick="genFromCustom()" style="margin-top:8px">→ GENERATE 3 VARIANTS</button>
+  </div>
+
+  <div id="srcLive" style="display:none">
+    <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;padding:12px;margin-bottom:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
+      Go to <span style="color:var(--green)">🔴 Live News tab</span> → tap any story → tap "Generate Post from This Story"<br>
+      It will bring you here with the real article as context.
+    </div>
+    <div id="liveTopicDisplay" style="display:none">
+      <div class="card" style="border-left:3px solid var(--gold)">
+        <div style="font-size:9px;color:var(--gold);font-family:monospace;letter-spacing:2px;margin-bottom:6px">SELECTED LIVE STORY</div>
+        <div id="liveTopicTitle" style="font-size:14px;color:var(--text);margin-bottom:6px"></div>
+        <div id="liveTopicDesc" style="font-size:11px;color:var(--dim);font-family:monospace;line-height:1.5"></div>
+      </div>
+      <button class="btn btn-gold btn-full" onclick="genFromLiveTopic()" style="margin-top:10px">→ GENERATE POST FROM THIS STORY</button>
+    </div>
+  </div>
+
+  <div class="loading-center" id="genLoading" style="display:none">
+    <div class="dots" style="justify-content:center"><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span></div>
+    <div style="font-size:10px;color:var(--dim);font-family:monospace;letter-spacing:3px;margin-top:12px">WRITING 3 VARIANTS · SCORING · FETCHING HASHTAGS</div>
+  </div>
+
+  <div class="err" id="genErr"></div>
+  <div id="variantsSection" style="display:none">
+    <div class="sec" style="margin-top:14px">03 · Choose Your Variant</div>
+    <div id="variantsWrap"></div>
+    <div class="card" style="font-size:10px;color:var(--dim);font-family:monospace;line-height:2">
+      <span style="color:var(--gold)">DIRECTOR RULE</span> · Verify every fact before posting · Post 8am · Reply every comment within 60 min · Comment on top voices daily
+    </div>
+  </div>
+</div>
+
+<!-- ======== CALENDAR ======== -->
+<div class="page" id="page-calendar">
+  <div style="font-size:20px;color:var(--text);margin-bottom:4px">Posting Calendar</div>
+  <div style="font-size:11px;color:var(--dim);font-family:monospace;margin-bottom:16px">Tap a day to mark as posted</div>
+
+  <div class="sec">This Week</div>
+  <div class="cal-grid" id="calGrid"></div>
+
+  <div class="sec">Best Times by Day</div>
+  <div class="card" style="font-size:12px;font-family:monospace;line-height:2.2;color:var(--muted)">
+    <div><span style="color:var(--gold)">Tuesday</span> · 7:30am · AI in Enterprise · Peak CDO scroll time</div>
+    <div><span style="color:var(--gold)">Wednesday</span> · 8:00am · Leadership Truth · Mid-week peak</div>
+    <div><span style="color:var(--gold)">Thursday</span> · 7:00am · Data Culture · Highest algorithm day</div>
+    <div><span style="color:var(--gold)">Friday</span> · 8:00am · Human Story · Emotional content peaks</div>
+    <div><span style="color:var(--dim)">Monday</span> · Optional · Global Vision</div>
+    <div><span style="color:var(--dim)">Weekend</span> · Rest · Let algorithm breathe</div>
+  </div>
+
+  <div class="sec">Streak Stats</div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-num" id="streakCount">0</div><div class="stat-lbl">Day Streak</div></div>
+    <div class="stat-card"><div class="stat-num" id="totalPosts">0</div><div class="stat-lbl">Total Posted</div></div>
+    <div class="stat-card"><div class="stat-num" id="weekPosts">0</div><div class="stat-lbl">This Week</div></div>
+    <div class="stat-card"><div class="stat-num" id="consistencyScore">0%</div><div class="stat-lbl">Consistency</div></div>
+  </div>
+</div>
+
+<!-- ======== VISUALS ======== -->
+<div class="page" id="page-visuals">
+  <div style="font-size:20px;color:var(--text);margin-bottom:4px">Visual Creator</div>
+  <div style="font-size:11px;color:var(--dim);font-family:monospace;margin-bottom:16px">Carousel slides + branded post cards</div>
+
+  <div class="sec">Paste Your Post Text</div>
+  <textarea id="visualInput" placeholder="Paste your verified post text here..." style="margin-bottom:12px"></textarea>
+
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-gold" onclick="generateCarousel()">◈ Generate Carousel</button>
+    <button class="btn btn-outline" onclick="generateCard()">▣ Generate Card</button>
+  </div>
+
+  <div class="err" id="visualErr"></div>
+
+  <div id="carouselSection" style="display:none">
+    <div class="sec">Carousel — 6 Slides</div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+      <div id="slideDisplay"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <button class="btn btn-outline" onclick="prevSlide()" style="font-size:10px;padding:8px 12px">← Prev</button>
+        <span style="font-size:10px;color:var(--dim);font-family:monospace" id="slideCounter">1/6</span>
+        <button class="btn btn-outline" onclick="nextSlide()" style="font-size:10px;padding:8px 12px">Next →</button>
+      </div>
+    </div>
+    <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;padding:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
+      Screenshot each slide → LinkedIn → Add all 6 in order → Paste text → Publish
+    </div>
+  </div>
+
+  <div id="cardSection" style="display:none">
+    <div class="sec">Post Card</div>
+    <div style="text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px" id="cardDisplay"></div>
+    <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;padding:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
+      Screenshot card → attach to LinkedIn post → people save visuals 3x more
+    </div>
+  </div>
+</div>
+
+<!-- ======== ANALYTICS ======== -->
+<div class="page" id="page-analytics">
+  <div style="font-size:20px;color:var(--text);margin-bottom:16px">Analytics</div>
+
+  <div class="sec">Performance Overview</div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-num" id="aTotal">0</div><div class="stat-lbl">Generated</div></div>
+    <div class="stat-card"><div class="stat-num" id="aPosted">0</div><div class="stat-lbl">Published</div></div>
+    <div class="stat-card"><div class="stat-num" id="aStreak">0</div><div class="stat-lbl">Streak</div></div>
+    <div class="stat-card"><div class="stat-num" id="aConsist">0%</div><div class="stat-lbl">Consistency</div></div>
+  </div>
+
+  <div class="sec">Post Type Performance</div>
+  <div class="card" id="typeChart"></div>
+
+  <div class="sec">Log Post Performance</div>
+  <div class="card">
+    <select id="logType" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:10px;font-family:monospace;font-size:12px;margin-bottom:8px">
+      <option value="operator">Operator Truth</option>
+      <option value="story">Human Story</option>
+      <option value="data">Data Reframe</option>
+      <option value="culture">Culture Insight</option>
+      <option value="firstgen">First Gen Voice</option>
+      <option value="global">Global Vision</option>
+    </select>
+    <select id="logPerf" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:10px;font-family:monospace;font-size:12px;margin-bottom:12px">
+      <option value="viral">🔥 Viral — lots of comments</option>
+      <option value="good">👍 Good — solid engagement</option>
+      <option value="average">📊 Average — some likes</option>
+      <option value="poor">👎 Poor — little response</option>
+    </select>
+    <button class="btn btn-gold btn-full" onclick="logPerformance()">LOG PERFORMANCE</button>
+  </div>
+
+  <div class="sec">AI Recommendations</div>
+  <div class="card" id="aiRecs" style="font-size:12px;color:var(--muted);font-family:monospace;line-height:1.8">Post more content to unlock personalized recommendations.</div>
+</div>
+
+<!-- ======== SETUP ======== -->
+<div class="page" id="page-setup">
+  <div style="font-size:20px;color:var(--text);margin-bottom:16px">Setup</div>
+
+  <div class="sec">Claude API Key</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get from: <span style="color:var(--gold)">console.anthropic.com</span> → API Keys</div>
+    <input type="password" id="claudeKeyInput" placeholder="sk-ant-api03-..." />
+    <div style="font-size:11px;font-family:monospace;margin-bottom:10px" id="claudeStatus">Not configured</div>
+    <button class="btn btn-gold" onclick="saveClaudeKey()">SAVE CLAUDE KEY</button>
+  </div>
+
+  <div class="sec">NewsAPI Key</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin-bottom:10px">Get free key from: <span style="color:var(--gold)">newsapi.org</span></div>
+    <input type="password" id="newsKeyInput" placeholder="Your NewsAPI key..." />
+    <div style="font-size:11px;font-family:monospace;margin-bottom:10px;color:var(--green)" id="newsStatus">✓ Key loaded</div>
+    <button class="btn btn-gold" onclick="saveNewsKey()">SAVE NEWS KEY</button>
+  </div>
+
+  <div class="sec">Live Sources Connected</div>
+  <div class="card" style="font-size:11px;color:var(--muted);font-family:monospace;line-height:2.2">
+    <div><span style="color:var(--green)">✓</span> NewsAPI — 80,000+ news sources, real headlines</div>
+    <div><span style="color:var(--green)">✓</span> HackerNews — top tech discussions right now</div>
+    <div><span style="color:var(--green)">✓</span> Reddit — r/artificial r/MachineLearning r/leadership</div>
+    <div><span style="color:var(--green)">✓</span> Dev.to — AI and engineering trends</div>
+    <div><span style="color:var(--green)">✓</span> Google News RSS — breaking business and tech</div>
+    <div style="margin-top:8px;color:var(--dim)">Updated every time you open Live News tab</div>
+  </div>
+
+  <div class="sec">Your DNA</div>
+  <div class="card" style="font-size:11px;color:var(--muted);font-family:monospace;line-height:2">
+    <div>👤 <span style="color:var(--text)">Balaji Muthukumar Veeramani</span></div>
+    <div>🏢 Director AI/ML Ops · IBM · Toyota · Union Pacific · Hallmark</div>
+    <div>🧠 iD Personality · Tri-Modal Brain · Analytical+Social+Conceptual 95th</div>
+    <div>🌙 Sagittarius Moon · Aquarius Ascendant · Purvashadha Nakshatra</div>
+    <div>🎯 Goal: 1M+ followers · Global Enterprise AI Authority</div>
+    <div>⚠️ <span style="color:#C47878">Verify every fact before publishing. Never claim what you did not do.</span></div>
+  </div>
+
+  <div class="sec">Deploy as App</div>
+  <div class="card" style="font-size:11px;color:var(--muted);font-family:monospace;line-height:2">
+    <div style="color:var(--gold);margin-bottom:6px">GitHub Pages — free permanent URL</div>
+    <div>1. github.com → New repo → name: bcis-tool → Public</div>
+    <div>2. Add this file as index.html</div>
+    <div>3. Settings → Pages → Deploy from main</div>
+    <div>4. URL: <span style="color:var(--blue)">mvbinvestor-alt.github.io/bcis-tool</span></div>
+    <div>5. Safari → Share → Add to Home Screen</div>
+  </div>
+</div>
+
+<script>
+// ============ CONSTANTS ============
+const NEWS_API_KEY = '79edac0421964e07a4c8144b3ef6b023';
+const COLORS = {operator:'#C8A96E',story:'#7AC8A0',data:'#7EB8D4',culture:'#C47EB8',firstgen:'#C8956E',global:'#9B8EC8'};
+const ICONS = {operator:'◈',story:'◉',data:'▣',culture:'◎',firstgen:'◇',global:'◬'};
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const CAL_SCHED = {1:{type:'AI',time:'7:30am',color:'#7EB8D4'},2:{type:'Leadership',time:'8:00am',color:'#C8A96E'},3:{type:'Data',time:'7:00am',color:'#9B8EC8'},4:{type:'Story',time:'8:00am',color:'#7AC8A0'},5:{type:'Global',time:'8:00am',color:'#C8956E'},6:{type:'Rest',time:'',color:'#333'},0:{type:'Rest',time:'',color:'#333'}};
+
+const SEEDS = [
+  {type:'operator',text:'C-suite collecting AI on resume with zero ROI accountability or skin in the game'},
+  {type:'operator',text:'88% of companies use AI. Only 39% see results. The gap is permission not technology.'},
+  {type:'culture',text:'Why the permission gap kills more AI projects than bad models ever will'},
+  {type:'story',text:'My mom married at 14. I became a Fortune 100 Director. What she taught me about leading.'},
+  {type:'data',text:'17 years. $100M programs. The one number that actually predicts AI transformation success.'},
+  {type:'firstgen',text:'First-gen professionals carry the hardest enterprise AI skill. Most companies never look for it.'},
+  {type:'culture',text:'Leaders who genuinely care get punished. Title collectors get promoted. Here is exactly why.'},
+  {type:'global',text:'1.2 billion people need reskilling by 2030. Most enterprise AI strategies miss the real question.'},
+  {type:'operator',text:'AI agents are everywhere. Nobody asks who owns the output when the agent is wrong.'},
+  {type:'story',text:'My daughter Avni fought 3 weeks in NICU. That is what real fighting spirit looks like.'},
+  {type:'global',text:'Companies winning at AI in 2026 do not have the biggest budgets. Here is what they have instead.'},
+  {type:'firstgen',text:'My father lost everything in his transport business. I ended up at Union Pacific. Destiny.'},
+];
+
+const ANGLES = [
+  {label:'Contrast & Blunt Truth',color:'#C8A96E'},
+  {label:'Personal Story Arc',color:'#7AC8A0'},
+  {label:'Insider Operator View',color:'#7EB8D4'},
+];
+
+const DNA = `You are the content intelligence system for Balaji Veeramani.
+
+CRITICAL RULE: Only write content based on what Balaji has actually done. Never fabricate experience. If uncertain, write from his verified background only.
+
+GOAL — BE HONEST ABOUT THIS: The target is the LinkedIn Top Voice blue badge (invite-only, awarded on content quality, originality, consistency, trust — not follower count) within 6-9 months, and steady compounding niche authority growth. NOT rapid follower-count chasing — that is not how LinkedIn works and any content implying "going viral fast" is off-strategy.
+
+VERIFIED IDENTITY: Director AI/ML Ops. 17+ years. IBM (delivery lead AT&T DirecTV Sprint), Toyota Financial Services (7 years senior TPM), Union Pacific Railroad (Director Cloud Data Platform and AI/ML Ops — Teradata to Snowflake migration, ML infrastructure, data governance, $2M annual savings, 30% customer satisfaction increase, 50% model dev time reduction), Hallmark (IT Director digital transformation Power BI migration), Xoriant. PMP CSM ITIL Six Sigma Green Belt NLP Diplomat Practitioner 2010. First-generation graduate India. Visa consulting side business.
+
+REAL VOICE EXAMPLES — LEARNED FROM 6 ACTUAL BALAJI POSTS. Match this pattern, not a description of it:
+
+EXAMPLE 1 (AI bias observation): "As a guest speaker at an AI/ML summit, I discussed AI's capacity to think outside the box... I tested both, noting ChatGPT's superior conversational capabilities compared to Bard. Recently, I had Bard analyze a video of mine... it misinterpreted my views... this incident underscores Bard's rapid progress, which is impressive. However, it also raises concerns about its biased analysis..."
+
+EXAMPLE 2 (data culture panel): "I was posed with a thought-provoking multi-layered question... Is it top-down or bottom-up? By continuously developing our skills, we can adapt to the changing demands of the industry. Did you know that by 2030, it's estimated that 1.2 billion individuals globally will need reskilling... I firmly believe that a successful data culture is a result of both top-down leadership and bottom-up enthusiasm."
+
+EXAMPLE 3 (Union Pacific gratitude/transition): "I want to express my gratitude to Union Pacific Railroad for the opportunity... Despite the recent whirlwind of management reorganization, I understand that UP needs to make tough decisions to advance its vision. When I left Dallas last year for this opportunity, leaving behind many friends and multiple job offers, many asked why I would move to Omaha. My answer has always been driven by my passion for transportation: 'I like to swim against the current.'"
+
+EXAMPLE 4 (LEAD conference award): "I feel incredibly humbled to have been honored with the Develop Award, which I proudly accepted on behalf of all the hardworking members of our incredible LEAD committee. Thank you Katie Novak, April Podraza for roping me in."
+
+EXAMPLE 5 (Women's Day / mom tribute): "I want to express my gratitude to all the women in my life... my heroine, my mom Veeramani. Despite getting married at the age of 14 in an arranged marriage, she went on to become a mother at 15... her persistence and unwavering dedication towards education ensured that my brother and I are the first-generation graduates in our family today. That's the reason why I carry her in my last name as my identity."
+
+EXAMPLE 6 (St. Louis transport museum): "Last weekend, my wife and I went on a road trip to St. Louis... We found a transport museum nearby, and as a kid, I was always fascinated by transportation due to my father's transport business... My dad had around 50 to 55 employees, and he made a considerable fortune from it before losing everything, so I was told to pursue any career except the transport business."
+
+REAL VOICE PATTERNS (extracted from evidence, not guessed): Every post names and thanks specific real people by full name. Opens with a personal moment before any insight. Blends professional credibility with vulnerability in the same post. Gratitude-anchored — nearly every post expresses thanks explicitly. Data and facts are used as a bridge to a human point, never standalone. Closes by inviting the community in genuinely.
+
+THE GAP TO CLOSE: Balaji's historical posts rarely show contrarian or blunt takes — the D side of his iD personality is underused. 2026 LinkedIn data shows contrarian data-backed takes and "what I got wrong" posts outperform pure gratitude posts for reach. Blend both: keep the real gratitude-anchored warmth AND add more blunt operator truth, without losing the authentic named-people, vulnerability-first pattern above.
+
+VERIFIED STORIES: Mom Veeramani married 14 first child 15 — Balaji first-gen graduate carries her name. Daughter Avni premature 34 weeks 3 weeks NICU. Father trucking company Balajee Transport India lost everything — Balaji told to avoid transport ended at Union Pacific Railroad. NLP mentor Ashok Subramanian 2008. Road trip St Louis transport museum met Doug instantly connected.
+
+PERSONALITY DiSC iD: Primary I warm inspiring people-first gratitude-led storyteller. Secondary D blunt direct when truth needs saying. SHOW BOTH — not just the warm I side.
+
+EMERGENETICS: Analytical+Social+Conceptual all 95th percentile. Structural 37th. Sagittarius Moon global thinker. Aquarius Ascendant visionary outsider. Purvashadha unstoppable persuader.
+
+CORE BELIEFS — D side must show: AI is corporate buzzword most orgs zero real ROI. C-suite collects AI for resume not results. Leaders who care get punished. Culture eats technology. Permission gap kills AI. First-gen operators carry unique skills.
+
+VOICE: No long dashes. No corporate speak. No rapidly evolving game-changer excited to share. Show the D — blunt operator truths backed by real experience. Short punchy lines. 220-270 words.
+
+POST STRUCTURE Operator Arc: Line 1 counterintuitive blunt hook. Lines 2-3 permission real company real role real verified moment. Para 2 specific verified story real detail. Para 3 system pattern only 17yr operator sees. Para 4 named lesson bold quotable. Close specific question + 4-5 hashtags.`;
+
+// ============ STATE ============
+let claudeKey = localStorage.getItem('bcis_claude_key') || '';
+let newsKey = localStorage.getItem('bcis_news_key') || NEWS_API_KEY;
+let activePillar = null;
+let activeSrcTab = 'seeds';
+let newsFilter = null;
+let allNewsItems = [];
+let selectedLiveTopic = null;
+let carouselSlides = [];
+let currentSlide = 0;
+let postedDays = JSON.parse(localStorage.getItem('bcis_posted_days') || '{}');
+let perfLogs = JSON.parse(localStorage.getItem('bcis_perf_logs') || '[]');
+let totalGenerated = parseInt(localStorage.getItem('bcis_generated') || '0');
+
+// ============ INIT ============
+window.onload = () => {
+  const today = new Date();
+  document.getElementById('todayDate').textContent = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const sched = CAL_SCHED[today.getDay()];
+  document.getElementById('todayAdvice').textContent = sched.type !== 'Rest' ? `Post ${sched.type} content today at ${sched.time} for maximum reach` : 'Rest day — engage with comments and DMs today';
+
+  const schedCard = document.getElementById('todaySchedule');
+  if(schedCard) {
+    schedCard.innerHTML = Object.entries(CAL_SCHED).filter(([d])=>d!='0'&&d!='6').map(([d,s])=>`<div><span style="color:${s.color}">${DAYS[d]}</span> · ${s.time} · ${s.type}</div>`).join('');
+  }
+
+  if(claudeKey){document.getElementById('claudeKeyInput').value='••••••••••••••••••••';document.getElementById('claudeStatus').textContent='✓ Loaded';document.getElementById('claudeStatus').style.color='var(--green)';}
+  if(newsKey){document.getElementById('newsKeyInput').value='••••••••••••••••••••';document.getElementById('newsStatus').textContent='✓ NewsAPI key loaded';document.getElementById('newsStatus').style.color='var(--green)';}
+
+  renderSeeds();
+  renderCalendar();
+  updateStats();
+  loadAllNews();
+  if(claudeKey) loadBrief();
+};
+
+// ============ NAV ============
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='analytics') renderAnalytics();
+}
+
+// ============ SETUP ============
+function saveClaudeKey(){const v=document.getElementById('claudeKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_claude_key',v);claudeKey=v;document.getElementById('claudeKeyInput').value='••••••••••••••••••••';document.getElementById('claudeStatus').textContent='✓ Saved';document.getElementById('claudeStatus').style.color='var(--green)';loadBrief();}
+function saveNewsKey(){const v=document.getElementById('newsKeyInput').value.trim();if(!v||v.startsWith('•')){alert('Enter valid key');return;}localStorage.setItem('bcis_news_key',v);newsKey=v;document.getElementById('newsKeyInput').value='••••••••••••••••••••';document.getElementById('newsStatus').textContent='✓ Saved';document.getElementById('newsStatus').style.color='var(--green)';loadAllNews();}
+function checkClaudeKey(){if(!claudeKey){alert('Add your Claude API key in Setup tab.');return false;}return true;}
+
+// ============ LIVE NEWS ============
+async function loadAllNews() {
+  document.getElementById('newsLoading').style.display='block';
+  document.getElementById('newsGrid').innerHTML='';
+  document.getElementById('liveStatus').textContent='Fetching...';
+  hideErr('newsErr');
+  allNewsItems=[];
+
+  await Promise.allSettled([
+    fetchNewsAPI(),
+    fetchHackerNews(),
+    fetchReddit(),
+    fetchDevTo(),
+  ]);
+
+  document.getElementById('newsLoading').style.display='none';
+  document.getElementById('liveStatus').textContent=`${allNewsItems.length} stories · ${new Date().toLocaleTimeString()}`;
+  renderNewsGrid();
+}
+
+async function fetchNewsAPI() {
+  try {
+    const queries = ['artificial intelligence enterprise','AI leadership','data culture technology','machine learning operations'];
+    const q = queries[Math.floor(Math.random()*queries.length)];
+    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=6&language=en&apiKey=${newsKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.articles) {
+      data.articles.slice(0,6).forEach(a=>{
+        if(a.title && a.title !== '[Removed]') {
+          allNewsItems.push({
+            source:'📰 NewsAPI · '+a.source.name,
+            title: a.title,
+            desc: a.description||'',
+            url: a.url,
+            pillar: classifyPillar(a.title+' '+(a.description||'')),
+            time: formatTime(a.publishedAt),
+          });
+        }
+      });
+    }
+  } catch(e){}
+}
+
+async function fetchHackerNews() {
+  try {
+    const res = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+    const ids = await res.json();
+    const top = ids.slice(0,8);
+    const stories = await Promise.all(top.map(id=>fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r=>r.json()).catch(()=>null)));
+    stories.filter(s=>s&&s.title&&s.score>50).slice(0,5).forEach(s=>{
+      allNewsItems.push({
+        source:'🔥 HackerNews · '+s.score+' pts',
+        title: s.title,
+        desc: s.url ? 'Score: '+s.score+' · Comments: '+(s.descendants||0) : '',
+        url: s.url||'https://news.ycombinator.com/item?id='+s.id,
+        pillar: classifyPillar(s.title),
+        time: formatTime(new Date(s.time*1000).toISOString()),
+      });
+    });
+  } catch(e){}
+}
+
+async function fetchReddit() {
+  try {
+    const subs = ['artificial','MachineLearning','leadership'];
+    const sub = subs[Math.floor(Math.random()*subs.length)];
+    const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=5`,{headers:{'Accept':'application/json'}});
+    const data = await res.json();
+    data.data.children.slice(0,4).forEach(p=>{
+      const post = p.data;
+      if(post.score>100) {
+        allNewsItems.push({
+          source:'💬 Reddit · r/'+sub+' · '+post.score+' upvotes',
+          title: post.title,
+          desc: post.selftext ? post.selftext.substring(0,120)+'...' : 'Click to read discussion',
+          url: 'https://reddit.com'+post.permalink,
+          pillar: classifyPillar(post.title+' '+sub),
+          time: formatTime(new Date(post.created_utc*1000).toISOString()),
+        });
+      }
+    });
+  } catch(e){}
+}
+
+async function fetchDevTo() {
+  try {
+    const tags = ['ai','machinelearning','career','leadership'];
+    const tag = tags[Math.floor(Math.random()*tags.length)];
+    const res = await fetch(`https://dev.to/api/articles?tag=${tag}&per_page=5&top=1`);
+    const data = await res.json();
+    data.slice(0,4).forEach(a=>{
+      allNewsItems.push({
+        source:'⚡ Dev.to · '+a.positive_reactions_count+' reactions',
+        title: a.title,
+        desc: a.description||'',
+        url: a.url,
+        pillar: classifyPillar(a.title+' '+(a.description||'')+' '+tag),
+        time: formatTime(a.published_at),
+      });
+    });
+  } catch(e){}
+}
+
+function classifyPillar(text) {
+  const t = text.toLowerCase();
+  if(/agent|llm|gpt|claude|openai|anthropic|mlops|machine learning|deep learning|neural|ai model|generative|automation/.test(t)) return 'ai';
+  if(/leader|ceo|cto|cdo|execut|manag|strateg|board|organiz|culture|team|employ/.test(t)) return 'leadership';
+  if(/data|analytics|database|pipeline|warehouse|snowflake|databricks|governance/.test(t)) return 'data';
+  if(/immigr|first.gen|diversity|inclusion|india|global|reskill|upskill/.test(t)) return 'firstgen';
+  return 'global';
+}
+
+function formatTime(iso) {
+  try {
+    const d = new Date(iso);
+    const diff = Math.floor((Date.now()-d)/60000);
+    if(diff<60) return diff+'m ago';
+    if(diff<1440) return Math.floor(diff/60)+'h ago';
+    return Math.floor(diff/1440)+'d ago';
+  } catch(e){ return 'Recently'; }
+}
+
+function filterNews(pillar, btn) {
+  newsFilter = pillar;
+  document.querySelectorAll('#newsPillarRow .pill').forEach(b=>{b.style.background='none';b.style.borderColor='#1e1e1e';b.style.color='#555';});
+  if(pillar){btn.style.background=COLORS[pillar]+'18';btn.style.borderColor=COLORS[pillar];btn.style.color=COLORS[pillar];}
+  else{btn.style.background='#1a1a1a';btn.style.borderColor='#444';btn.style.color='#F0E8D8';}
+  renderNewsGrid();
+}
+
+function renderNewsGrid() {
+  const grid = document.getElementById('newsGrid');
+  const filtered = newsFilter ? allNewsItems.filter(n=>n.pillar===newsFilter) : allNewsItems;
+  if(!filtered.length){grid.innerHTML='<div style="text-align:center;padding:30px;font-size:12px;color:var(--dim);font-family:monospace">No stories loaded. Check your NewsAPI key in Setup.</div>';return;}
+  grid.innerHTML = filtered.map((item,i)=>`
+    <div class="news-card" style="border-left:3px solid ${COLORS[item.pillar]||'#C8A96E'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div class="news-source" style="color:${COLORS[item.pillar]||'#C8A96E'}">${item.source}</div>
+        <span style="font-size:9px;color:var(--dim);font-family:monospace;white-space:nowrap;margin-left:8px">${item.time}</span>
+      </div>
+      <div class="news-title">${escH(item.title)}</div>
+      ${item.desc?`<div class="news-desc">${escH(item.desc.substring(0,120))}${item.desc.length>120?'...':''}</div>`:''}
+      <div class="news-angle">Balaji's angle: What does a 17-year enterprise operator see that others miss in this story?</div>
+      <button class="news-btn" onclick="selectLiveStory(${i})">→ Generate Post from This Story</button>
+    </div>`).join('');
+}
+
+function selectLiveStory(index) {
+  const filtered = newsFilter ? allNewsItems.filter(n=>n.pillar===newsFilter) : allNewsItems;
+  selectedLiveTopic = filtered[index];
+  document.getElementById('liveTopicTitle').textContent = selectedLiveTopic.title;
+  document.getElementById('liveTopicDesc').textContent = selectedLiveTopic.desc||selectedLiveTopic.source;
+  document.getElementById('liveTopicDisplay').style.display='block';
+  setSrcTabDirect('live');
+  showPage('engine', document.querySelectorAll('.nav-tab')[2]);
+  document.getElementById('srcLive').style.display='block';
+  document.getElementById('srcSeeds').style.display='none';
+  document.getElementById('srcCustom').style.display='none';
+}
+
+function setSrcTabDirect(tab) {
+  activeSrcTab=tab;
+  document.querySelectorAll('.source-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.source-tab').forEach(t=>{if(t.textContent.toLowerCase().includes(tab.substring(0,4))){t.classList.add('active');}});
+}
+
+function genFromLiveTopic() {
+  if(!selectedLiveTopic) return;
+  generate(selectedLiveTopic.title+'. '+selectedLiveTopic.desc, selectedLiveTopic.pillar||'operator');
+}
+
+// ============ BRIEF ============
+async function loadBrief() {
+  if(!claudeKey) return;
+  const btn=document.getElementById('briefBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span> Generating...';
+  hideErr('briefErr');
+
+  // Use real news headlines as context if available
+  const newsContext = allNewsItems.slice(0,5).map(n=>n.title).join(' | ');
+
+  try {
+    const raw = await callAPI(`Today is ${new Date().toDateString()}. You are generating daily content recommendations for Balaji Veeramani.
+
+${newsContext ? `Real news happening right now: ${newsContext}` : ''}
+
+Based on these real stories and current trends in March 2026, generate 3 highly specific content recommendations using the 4-3-2-1 blend formula. Each must be something Balaji can authentically speak to from his verified 17-year career.
+
+Return ONLY valid JSON array:
+[{"type":"AI","day":"Today","topic":"Specific topic Balaji can authentically comment on","angle":"Unique operator angle using ONLY his verified experience at IBM Toyota Union Pacific"},{"type":"Leadership","day":"Thursday","topic":"Leadership topic","angle":"His blunt D truth from real experience"},{"type":"Human Story","day":"Saturday","topic":"Human story angle","angle":"How his real personal story connects"}]`);
+    const s=raw.indexOf('['),e=raw.lastIndexOf(']')+1;
+    if(s===-1) throw new Error('parse');
+    renderBriefRecs(JSON.parse(raw.slice(s,e)));
+    document.getElementById('lastFetched').textContent='Updated from live news: '+new Date().toLocaleTimeString();
+  } catch(e) {
+    renderBriefRecs(STATIC_RECS);
+    document.getElementById('lastFetched').textContent='Using curated recommendations';
+  }
+  btn.disabled=false;
+  btn.innerHTML='⟳ Refresh Recommendations';
+}
+
+const STATIC_RECS=[
+  {type:'AI',day:'Today',topic:'The AI pilot graveyard — 88% of enterprise AI never reaches production',angle:"Balaji watched this at Union Pacific. The Teradata to Snowflake migration taught him the model isn't the problem — accountability structure is."},
+  {type:'Leadership',day:'Thursday',topic:'C-suite AI theater — collecting tools without owning outcomes',angle:"His blunt D truth from 17 years: leaders adding AI to resume without shipping ROI are lying to their board."},
+  {type:'Human Story',day:'Saturday',topic:'My daughter Avni fought 3 weeks in NICU. 1.2B people face a different fight by 2030.',angle:"Connect her verified fighting spirit to the reskilling crisis. Real. Powerful. Only Balaji can write this."},
+];
+
+const REC_TAGS={'AI':{bg:'#0a1520',c:'#7EB8D4'},'Leadership':{bg:'#1a1000',c:'#C8A96E'},'Human Story':{bg:'#0a1a0a',c:'#7AC8A0'},'Global':{bg:'#1a0a00',c:'#C8956E'}};
+
+function renderBriefRecs(recs) {
+  const wrap=document.getElementById('briefRecs');
+  wrap.innerHTML='<div class="sec">Today\'s Recommendations — Based on Live News</div>'+recs.map(r=>{
+    const tc=REC_TAGS[r.type]||REC_TAGS['AI'];
+    const prompt=`Write a LinkedIn post for Balaji Veeramani on: "${r.topic}". Use ONLY his verified experience. iD voice — show BOTH warm I and blunt D. Operator Arc. 220-270 words. Return only post text.`;
+    return `<div class="card" style="border-left:3px solid ${tc.c};margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:${tc.bg};color:${tc.c};font-family:monospace">${r.type}</span>
+        <span style="font-size:10px;color:var(--dim);font-family:monospace">${r.day}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:8px;line-height:1.4">${r.topic}</div>
+      <div style="font-size:12px;color:var(--muted);font-style:italic;line-height:1.6;border-left:2px solid ${tc.c}33;padding-left:10px;margin-bottom:10px">${r.angle}</div>
+      <button style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px" onclick="copyTxt(this,'${escJ(prompt)}')">→ Copy Prompt</button>
+    </div>`;
+  }).join('');
+}
+
+// ============ POST ENGINE ============
+function setPillar(type, btn) {
+  activePillar=type;
+  document.querySelectorAll('#pillarRow .pill').forEach(b=>{b.style.background='none';b.style.borderColor='#1e1e1e';b.style.color='#555';});
+  if(type){btn.style.background=COLORS[type]+'18';btn.style.borderColor=COLORS[type];btn.style.color=COLORS[type];}
+  else{btn.style.background='#1a1a1a';btn.style.borderColor='#444';btn.style.color='#F0E8D8';}
+  renderSeeds();
+}
+
+function setSrcTab(tab, btn) {
+  activeSrcTab=tab;
+  document.querySelectorAll('.source-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['seeds','custom','live'].forEach(t=>{ const el=document.getElementById('src'+t.charAt(0).toUpperCase()+t.slice(1)); if(el) el.style.display=t===tab?'block':'none'; });
+}
+
+function renderSeeds() {
+  const grid=document.getElementById('seedsGrid');if(!grid)return;
+  const filtered=activePillar?SEEDS.filter(s=>s.type===activePillar):SEEDS;
+  grid.innerHTML=filtered.map(s=>`
+    <div class="seed-card" style="border-left:3px solid ${COLORS[s.type]}" onclick="generate('${escJ(s.text)}','${s.type}')">
+      <div style="font-size:9px;color:${COLORS[s.type]};font-family:monospace;letter-spacing:2px;margin-bottom:5px">${ICONS[s.type]} ${s.type.toUpperCase()}</div>
+      <div style="font-size:13px;color:#D0C8B8;line-height:1.5">${s.text}</div>
+      <div style="font-size:9px;color:var(--faint);font-family:monospace;margin-top:8px">TAP TO GENERATE →</div>
+    </div>`).join('');
+}
+
+function genFromCustom(){const v=document.getElementById('customInput').value.trim();if(!v)return;generate(v,activePillar||'operator');}
+
+async function generate(topicText, typeId) {
+  if(!checkClaudeKey()) return;
+  hideErr('genErr');
+  document.getElementById('genLoading').style.display='block';
+  document.getElementById('variantsSection').style.display='none';
+  totalGenerated++;
+  localStorage.setItem('bcis_generated',totalGenerated);
+
+  const typeLabel={operator:'Operator Truth',story:'Human Story',data:'Data Reframe',culture:'Culture Insight',firstgen:'First Gen Voice',global:'Global Vision'}[typeId]||'Operator Truth';
+  const newsCtx = allNewsItems.slice(0,3).map(n=>n.title).join(' | ');
+
+  try {
+    const [p1,p2,p3,hashRaw]=await Promise.all([
+      callAPI(`Write a LinkedIn post for Balaji Veeramani using Contrast and Blunt Truth angle. Show his D personality — blunt operator truth. Post type: ${typeLabel}. Topic: ${topicText}. ${newsCtx?'Current news context: '+newsCtx:''} Use ONLY verified experience. Operator Arc. 220-270 words. Return ONLY post text.`),
+      callAPI(`Write a LinkedIn post for Balaji Veeramani using Personal Story Arc angle. Show his I personality — warm human authentic. Post type: ${typeLabel}. Topic: ${topicText}. Use ONLY verified personal stories. Operator Arc. 220-270 words. Return ONLY post text.`),
+      callAPI(`Write a LinkedIn post for Balaji Veeramani using Insider Operator View angle. Blend both I and D. Post type: ${typeLabel}. Topic: ${topicText}. Draw on verified 17yr career. Operator Arc. 220-270 words. Return ONLY post text.`),
+      callAPI(`Generate the best LinkedIn hashtags for March 2026 for a post about: ${topicText}. Author is enterprise AI operator first-gen immigrant. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`)
+    ]);
+
+    let hashData={hashtags:['#AIinEnterprise','#DataCulture','#Leadership','#MLOps','#AITransformation','#OperatorLessons','#FirstGenInTech','#FutureOfWork'],bestTime:'Tue–Thu 7–9am',viralTip:'Reply to every comment within 60 minutes to trigger algorithmic boost.'};
+    try{const hs=hashRaw.indexOf('{'),he=hashRaw.lastIndexOf('}')+1;if(hs!==-1)hashData=JSON.parse(hashRaw.slice(hs,he));}catch(e){}
+
+    const posts=[p1,p2,p3];
+    const scores=posts.map(p=>scorePost(p));
+    document.getElementById('genLoading').style.display='none';
+    renderVariants(posts,scores,hashData);
+    updateStats();
+  } catch(e) {
+    document.getElementById('genLoading').style.display='none';
+    showErr('genErr','Generation failed: '+e.message+'. Check Claude API key in Setup.');
+  }
+}
+
+function scorePost(text) {
+  let score=0;
+  const first=(text.split('\n').find(l=>l.trim())||'');
+  if(first.length<60)score+=25;else if(first.length<90)score+=15;else score+=5;
+  if(/\d+/.test(text))score+=15;
+  if(/\?/.test(text))score+=10;
+  const words=text.split(/\s+/).length;
+  if(words>=200&&words<=280)score+=15;
+  if(/\b(I|my|me|we)\b/i.test(text))score+=10;
+  if(/\b(but|not|wrong|fail|gap|truth|nobody|only)\b/i.test(text))score+=10;
+  if(/\b(Union Pacific|Toyota|IBM|Hallmark|Deloitte)\b/.test(text))score+=15;
+  score=Math.min(score,99);
+  const label=score>=80?'🔥 High':score>=60?'⚡ Strong':'📈 Good';
+  const color=score>=80?'#7AC8A0':score>=60?'#C8A96E':'#7EB8D4';
+  const hook=/\b(not|why|wrong|fail|only|never|nobody)\b/i.test(first)&&first.length<70?'Strong':first.length<90?'Good':'Weak';
+  const hookColor=hook==='Strong'?'#7AC8A0':hook==='Good'?'#C8A96E':'#C47878';
+  return{score,label,color,hook,hookColor,words};
+}
+
+function renderVariants(variants,scores,hashData) {
+  const section=document.getElementById('variantsSection');
+  const wrap=document.getElementById('variantsWrap');
+  section.style.display='block';
+
+  const hashPanel=`<div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:14px;margin-bottom:12px">
+    <div style="font-size:8px;letter-spacing:4px;color:var(--green);font-family:monospace;margin-bottom:8px">LIVE HASHTAG INTELLIGENCE</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${(hashData.hashtags||[]).map(h=>`<span style="background:#0d2a0d;border:1px solid #1a4a1a;color:var(--green);padding:3px 9px;border-radius:99px;font-size:10px;font-family:monospace">${h}</span>`).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;flex:1;min-width:120px"><div style="font-size:8px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin-bottom:3px">BEST TIME</div><div style="font-size:12px;color:var(--gold)">${hashData.bestTime||'Tue–Thu 7–9am'}</div></div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;flex:2;min-width:150px"><div style="font-size:8px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin-bottom:3px">VIRAL TIP</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${hashData.viralTip||'Reply within 60 min.'}</div></div>
+    </div>
+  </div>`;
+
+  wrap.innerHTML=hashPanel+variants.map((text,i)=>{
+    const angle=ANGLES[i];const sc=scores[i];
+    const lines=text.split('\n').map((line,li)=>{
+      let c='#C0B0A0',fw='normal',fs='13px';
+      if(li===0&&line.trim()){c='#F0E8D8';fw='600';fs='14px';}
+      if(line.trim().startsWith('#'))c=angle.color;
+      const mb=line.trim()===''?'8px':'1px';
+      return `<div style="color:${c};font-weight:${fw};font-size:${fs};margin-bottom:${mb}">${escH(line)}</div>`;
+    }).join('');
+    const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+'\n\n'+(hashData.hashtags||[]).slice(0,5).join(' ');
+    return `<div class="variant-card" style="border-top:2px solid ${angle.color}">
+      <div class="variant-header">
+        <div><span style="font-size:9px;color:${angle.color};font-family:monospace;letter-spacing:2px">VARIANT ${i+1}</span><span style="font-size:10px;color:var(--dim);font-family:monospace;margin-left:8px">${angle.label}</span></div>
+        <div style="display:flex;gap:4px">${['🔥','👍','👎'].map(r=>`<button style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:4px" onclick="rateBtn(this)">${r}</button>`).join('')}</div>
+      </div>
+      <div style="padding:8px 14px;border-bottom:1px solid var(--border2);display:flex;gap:6px;flex-wrap:wrap">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">VIRAL</span><span style="font-size:14px;font-weight:700;color:${sc.color}">${sc.score}</span><span style="font-size:10px;color:${sc.color}">${sc.label}</span></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">HOOK</span><span style="font-size:11px;color:${sc.hookColor}">${sc.hook}</span></div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">WORDS</span><span style="font-size:11px;color:${sc.words>=200&&sc.words<=280?'#7AC8A0':'#C47878'}">${sc.words}</span></div>
+      </div>
+      <div class="variant-body">${lines}</div>
+      <div class="variant-footer">
+        <button class="copy-btn" style="background:${angle.color};color:#080808;flex:2;width:70%" onclick="copyTxt(this,'${escJ(postWithTags)}')">COPY POST + HASHTAGS</button>
+        <button class="copy-btn" style="background:var(--bg3);color:var(--gold);border:1px solid ${angle.color}33;flex:1;width:30%;font-size:9px" onclick="copyTxt(this,'${escJ((hashData.hashtags||[]).join(' '))}')">TAGS</button>
+      </div>
+    </div>`;
+  }).join('');
+  section.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ============ CALENDAR ============
+function getWeekKey(){const d=new Date();const jan1=new Date(d.getFullYear(),0,1);const week=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);return d.getFullYear()+'_W'+week;}
+function toggleDay(dayIdx){const key=getWeekKey()+'_'+dayIdx;if(postedDays[key])delete postedDays[key];else postedDays[key]=true;localStorage.setItem('bcis_posted_days',JSON.stringify(postedDays));renderCalendar();updateStats();}
+
+function renderCalendar() {
+  const grid=document.getElementById('calGrid');if(!grid)return;
+  const today=new Date().getDay();const week=getWeekKey();
+  grid.innerHTML=DAYS.map((d,i)=>{
+    const sched=CAL_SCHED[i];const key=week+'_'+i;const isPosted=postedDays[key];const isRest=sched.type==='Rest';const isToday=i===today;
+    return `<div class="cal-day ${isPosted?'posted':''} ${isToday?'today-cal':''}" style="opacity:${isRest?.5:1}" onclick="${isRest?'':('toggleDay('+i+')')}">
+      <div style="font-size:9px;color:${isPosted?'var(--green)':isToday?'var(--gold)':'var(--dim)'};font-family:monospace">${d}</div>
+      <div style="font-size:8px;color:${sched.color};margin-top:2px">${sched.type}</div>
+      <div style="font-size:8px;color:var(--dim);margin-top:1px">${sched.time}</div>
+      <div style="font-size:14px;margin-top:3px">${isPosted?'✓':isRest?'—':'○'}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats() {
+  const week=getWeekKey();
+  const weekPosted=DAYS.filter((_,i)=>postedDays[week+'_'+i]).length;
+  const allPosted=Object.keys(postedDays).length;
+  const streak=calcStreak();
+  const consistency=Math.min(Math.round((weekPosted/5)*100),100);
+  ['streakCount','aStreak'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=streak;});
+  ['totalPosts','aPosted'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=allPosted;});
+  const wp=document.getElementById('weekPosts');if(wp)wp.textContent=weekPosted;
+  ['consistencyScore','aConsist'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=consistency+'%';});
+  const at=document.getElementById('aTotal');if(at)at.textContent=totalGenerated;
+}
+
+function calcStreak(){let s=0;const today=new Date();for(let i=0;i<30;i++){const d=new Date(today);d.setDate(d.getDate()-i);if(d.getDay()===0||d.getDay()===6)continue;const dateKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const posted=Object.keys(postedDays).some(k=>k.includes(dateKey));if(posted)s++;else if(i>0)break;}return s;}
+
+// ============ VISUALS ============
+async function generateCarousel() {
+  const text=document.getElementById('visualInput').value.trim();
+  if(!text){showErr('visualErr','Paste your post text first.');return;}
+  if(!checkClaudeKey())return;
+  hideErr('visualErr');
+  try {
+    const raw=await callAPI(`Create 6 LinkedIn carousel slides for Balaji Veeramani based on: "${text.substring(0,400)}"\nReturn ONLY valid JSON:\n[{"slideNum":1,"label":"HOOK","headline":"Short headline","body":"2-3 lines","style":"dark"},{"slideNum":2,"label":"THE STORY","headline":"...","body":"...","style":"light"},{"slideNum":3,"label":"THE PROBLEM","headline":"...","body":"...","style":"dark"},{"slideNum":4,"label":"THE DATA","headline":"...","body":"...","style":"light"},{"slideNum":5,"label":"THE FIX","headline":"...","body":"...","style":"dark"},{"slideNum":6,"label":"THE LESSON","headline":"Bold quotable lesson","body":"Question for community","style":"gold"}]`);
+    const s=raw.indexOf('['),e=raw.lastIndexOf(']')+1;if(s===-1)throw new Error('parse');
+    carouselSlides=JSON.parse(raw.slice(s,e));currentSlide=0;
+    renderCarousel();document.getElementById('carouselSection').style.display='block';
+    document.getElementById('carouselSection').scrollIntoView({behavior:'smooth'});
+  } catch(e){showErr('visualErr','Could not generate carousel: '+e.message);}
+}
+
+function renderCarousel(){
+  if(!carouselSlides.length)return;
+  const slide=carouselSlides[currentSlide];
+  const isDark=slide.style==='dark',isGold=slide.style==='gold';
+  const bg=isGold?'#1a1200':isDark?'#0A0A0A':'#F0E8D8';
+  const tc=isGold?'#C8A96E':isDark?'#F0E8D8':'#1A1A1A';
+  const sc=isGold?'#9a7a40':isDark?'#C0B0A0':'#555';
+  document.getElementById('slideDisplay').innerHTML=`<div style="background:${bg};padding:22px;min-height:180px;position:relative;border-radius:6px">
+    <div style="font-size:9px;color:#C8A96E;font-family:monospace;letter-spacing:3px;margin-bottom:10px">${slide.label} · ${slide.slideNum}/6</div>
+    <div style="font-size:18px;font-weight:600;color:${tc};line-height:1.3;margin-bottom:10px">${slide.headline}</div>
+    <div style="font-size:12px;color:${sc};line-height:1.7">${slide.body}</div>
+    <div style="position:absolute;bottom:14px;right:14px;font-size:9px;color:${sc};font-family:monospace">Balaji Veeramani</div>
+  </div>`;
+  document.getElementById('slideCounter').textContent=`${currentSlide+1}/6`;
+}
+
+function prevSlide(){if(currentSlide>0){currentSlide--;renderCarousel();}}
+function nextSlide(){if(currentSlide<carouselSlides.length-1){currentSlide++;renderCarousel();}}
+
+function generateCard(){
+  const text=document.getElementById('visualInput').value.trim();
+  if(!text){showErr('visualErr','Paste your post text first.');return;}
+  hideErr('visualErr');
+  const first=text.split('\n').find(l=>l.trim())||text.substring(0,80);
+  document.getElementById('cardDisplay').innerHTML=`<svg viewBox="0 0 540 540" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:380px;border-radius:6px">
+    <rect width="540" height="540" fill="#FAFAF8"/><rect width="540" height="4" fill="#1A1A1A"/>
+    <rect x="48" y="60" width="2" height="420" fill="#E8E0D0"/>
+    <text x="80" y="120" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#1A1A1A" xml:space="preserve">${escSVG(first.substring(0,42))}</text>
+    ${first.length>42?`<text x="80" y="148" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#1A1A1A" xml:space="preserve">${escSVG(first.substring(42,84))}</text>`:''}
+    <rect x="80" y="${first.length>42?172:152}" width="412" height="1" fill="#E8E0D0"/>
+    <text x="80" y="${first.length>42?216:196}" font-family="Georgia,serif" font-size="13" fill="#C8A96E">Operator Lessons · Balaji Veeramani</text>
+    <text x="80" y="482" font-family="Georgia,serif" font-size="13" font-weight="700" fill="#1A1A1A">Balaji Veeramani</text>
+    <text x="80" y="500" font-family="Georgia,serif" font-size="11" fill="#AAA">Director, AI/ML Ops · Enterprise Operator</text>
+    <text x="492" y="500" font-family="Georgia,serif" font-size="10" fill="#CCC" text-anchor="end">BCIS · 2026</text>
+  </svg>`;
+  document.getElementById('cardSection').style.display='block';
+  document.getElementById('cardSection').scrollIntoView({behavior:'smooth'});
+}
+
+function escSVG(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ============ ANALYTICS ============
+function renderAnalytics(){updateStats();renderTypeChart();renderAIRecs();}
+function renderTypeChart(){
+  const el=document.getElementById('typeChart');if(!el)return;
+  const counts={operator:0,story:0,data:0,culture:0,firstgen:0,global:0};
+  perfLogs.forEach(l=>{if(counts[l.type]!==undefined)counts[l.type]++;});
+  const max=Math.max(...Object.values(counts),1);
+  el.innerHTML=Object.entries(counts).map(([type,count])=>`<div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;color:${COLORS[type]};font-family:monospace">${ICONS[type]} ${type.toUpperCase()}</span><span style="font-size:11px;color:var(--dim);font-family:monospace">${count}</span></div>
+    <div style="height:6px;background:var(--bg3);border-radius:3px"><div style="height:6px;border-radius:3px;background:${COLORS[type]};width:${(count/max)*100}%;transition:width .4s"></div></div>
+  </div>`).join('');
+}
+function renderAIRecs(){
+  const el=document.getElementById('aiRecs');if(!el||perfLogs.length<2)return;
+  const viral=perfLogs.filter(l=>l.perf==='viral');
+  const best=viral.reduce((acc,l)=>{acc[l.type]=(acc[l.type]||0)+1;return acc;},{});
+  const top=Object.entries(best).sort((a,b)=>b[1]-a[1])[0];
+  if(!top)return;
+  el.innerHTML=`<div style="color:var(--green);margin-bottom:6px">Based on ${perfLogs.length} logged posts:</div>
+    <div style="margin-bottom:4px">Best type: <span style="color:${COLORS[top[0]]}">${ICONS[top[0]]} ${top[0].toUpperCase()}</span> (${top[1]} viral)</div>
+    <div>Post more ${top[0]} content — it is working for you.</div>`;
+}
+function logPerformance(){
+  const type=document.getElementById('logType').value;const perf=document.getElementById('logPerf').value;
+  perfLogs.push({type,perf,date:new Date().toISOString()});
+  localStorage.setItem('bcis_perf_logs',JSON.stringify(perfLogs));
+  const today=new Date().getDay();toggleDay(today);
+  renderAnalytics();alert('✓ Logged. Keep going.');
+}
+
+// ============ API ============
+async function callAPI(userMsg){
+  const body={model:'claude-sonnet-4-20250514',max_tokens:1000,system:DNA,messages:[{role:'user',content:userMsg}]};
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message);
+  return data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+
+// ============ HELPERS ============
+function showErr(id,msg){const b=document.getElementById(id);if(b){b.textContent=msg;b.style.display='block';}}
+function hideErr(id){const b=document.getElementById(id);if(b)b.style.display='none';}
+function escJ(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n');}
+function escH(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function copyTxt(btn,text){navigator.clipboard.writeText(text.replace(/\\n/g,'\n'));const orig=btn.textContent;const origBg=btn.style.background;btn.textContent='✓ COPIED';btn.style.background='#0a1a0a';btn.style.color='#7AC8A0';setTimeout(()=>{btn.textContent=orig;btn.style.background=origBg;btn.style.color='';},3000);}
+function rateBtn(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.style.opacity='0.25');btn.style.opacity='1';btn.style.background='#1a1a1a';}
+</script>
+</body>
+</html>
