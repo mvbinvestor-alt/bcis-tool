@@ -130,7 +130,7 @@ input:focus{outline:none;border-color:var(--gold)}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <div>
       <div style="font-size:20px;color:var(--text);margin-bottom:2px">Live News Intelligence</div>
-      <div class="live-indicator"><div class="live-dot"></div>Real feeds · Updated now</div>
+      <div class="live-indicator"><div class="live-dot" id="liveDot"></div><span id="liveNewsTimestamp">Not fetched yet</span></div>
     </div>
     <button class="btn btn-gold" id="newsRefreshBtn" onclick="loadAllNews()">⟳ Refresh All</button>
   </div>
@@ -599,10 +599,13 @@ function checkClaudeKey(){
 }
 
 // ============ LIVE NEWS ============
+let lastNewsFetchTime = null;
+
 async function loadAllNews() {
   document.getElementById('newsLoading').style.display='block';
   document.getElementById('newsGrid').innerHTML='';
   document.getElementById('liveStatus').textContent='Fetching...';
+  const tsEl=document.getElementById('liveNewsTimestamp'); if(tsEl) tsEl.textContent='Fetching now...';
   hideErr('newsErr');
   allNewsItems=[];
 
@@ -613,9 +616,22 @@ async function loadAllNews() {
     fetchDevTo(),
   ]);
 
+  lastNewsFetchTime = Date.now();
   document.getElementById('newsLoading').style.display='none';
   document.getElementById('liveStatus').textContent=`${allNewsItems.length} stories · ${new Date().toLocaleTimeString()}`;
+  if(tsEl) tsEl.textContent=`Fetched ${allNewsItems.length} stories at ${new Date().toLocaleTimeString()}`;
   renderNewsGrid();
+}
+
+function isNewsStale() {
+  if(!lastNewsFetchTime) return true;
+  return (Date.now() - lastNewsFetchTime) > (90 * 60 * 1000); // 90 minutes
+}
+
+async function ensureFreshNewsBeforePosting() {
+  if(isNewsStale()){
+    await loadAllNews();
+  }
 }
 
 async function fetchNewsAPI() {
@@ -868,6 +884,13 @@ async function generate(topicText, typeId, mode) {
   hideErr('genErr');
   document.getElementById('genLoading').style.display='block';
   document.getElementById('variantsSection').style.display='none';
+
+  if(isNewsStale()){
+    const loadingSub=document.querySelector('#genLoading div:last-child');
+    if(loadingSub) loadingSub.textContent='Refreshing today\'s news before writing...';
+    await ensureFreshNewsBeforePosting();
+  }
+
   totalGenerated++;
   localStorage.setItem('bcis_generated',totalGenerated);
 
