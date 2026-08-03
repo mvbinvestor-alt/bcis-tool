@@ -1044,9 +1044,9 @@ async function generate(topicText, typeId, mode) {
     let calls;
     if(isCommentary){
       calls = [
-        callAPI(`MODE B — Live News Commentary. Write Balaji's genuine take on this real news story: ${topicText}. This is HIS ANALYSIS as an informed industry voice, not a personal narrative post. Do not force a personal anecdote. State the development, what people are missing, his real analysis, the implication for enterprise AI/leadership readers. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`MODE B — Live News Commentary, alternate angle. Write Balaji's take on this real news story: ${topicText}. Slightly more contrarian framing than a typical reaction — what's the counterintuitive read here? No forced personal story. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`MODE B — Live News Commentary, third angle. Write Balaji's take on this real news story: ${topicText}. Frame it through pattern-recognition from years in enterprise AI/data leadership, in general terms, without naming a specific employer unless one was explicitly requested. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary. Write Balaji's genuine take on this real news story: ${topicText}. CRITICAL: The first 1-2 sentences must clearly reference what the actual real development is (paraphrased, not a verbatim quote) so a reader knows exactly what prompted this take — do not open with vague industry buzzwords like "systemic crisis" or "the Great Resignation" as if they were established facts; ground the post in the specific real story. This is HIS ANALYSIS as an informed industry voice, not a personal narrative post. Do not force a personal anecdote. State the development, what people are missing, his real analysis, the implication for enterprise AI/leadership readers. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary, alternate angle. Write Balaji's take on this real news story: ${topicText}. CRITICAL: Open by clearly referencing the actual real development (paraphrased) before offering the contrarian read — the post must be traceable to a specific real story, not generic industry commentary. Slightly more contrarian framing than a typical reaction. No forced personal story. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary, third angle. Write Balaji's take on this real news story: ${topicText}. CRITICAL: Clearly reference the actual real development in the opening before the pattern-recognition analysis — must be traceable to this specific story, not vague generalities. Frame it through pattern-recognition from years in enterprise AI/data leadership, in general terms, without naming a specific employer unless one was explicitly requested. 220-270 words. Return ONLY post text.`, systemPrompt),
         callAPI(`Generate the best LinkedIn hashtags for a commentary post about: ${topicText}. Author is an enterprise AI operator giving an informed industry take. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`, systemPrompt)
       ];
     } else {
@@ -1128,7 +1128,8 @@ function renderVariants(variants,scores,hashData,typeId,sourceBadge) {
       const mb=line.trim()===''?'8px':'1px';
       return `<div style="color:${c};font-weight:${fw};font-size:${fs};margin-bottom:${mb}">${escH(line)}</div>`;
     }).join('');
-    const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+'\n\n'+(hashData.hashtags||[]).slice(0,5).join(' ');
+    const sourceLine = (sourceBadge && sourceBadge.label==='✓ SOURCED FROM LIVE NEWS') ? `\n\n[Reference: ${sourceBadge.detail}]` : '';
+    const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+sourceLine+'\n\n'+(hashData.hashtags||[]).slice(0,5).join(' ');
     return `<div class="variant-card" style="border-top:2px solid ${angle.color}">
       <div class="variant-header">
         <div><span style="font-size:9px;color:${angle.color};font-family:monospace;letter-spacing:2px">VARIANT ${i+1}</span><span style="font-size:10px;color:var(--dim);font-family:monospace;margin-left:8px">${angle.label}</span></div>
