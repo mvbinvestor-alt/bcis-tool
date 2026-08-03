@@ -276,7 +276,9 @@ input:focus{outline:none;border-color:var(--gold)}
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn btn-gold" onclick="generateCarousel()">◈ Generate Carousel</button>
     <button class="btn btn-outline" onclick="generateCard()">▣ Generate Card</button>
+    <button class="btn btn-outline" onclick="generateStatCover()" style="border-color:#E0B84D;color:#E0B84D">📊 Generate Stat Cover</button>
   </div>
+  <div style="font-size:10px;color:var(--dim);font-family:monospace;margin-bottom:14px;line-height:1.6">Stat Cover works best when your text includes a real number or finding — your own genuine insight, or a source you've verified. It will not invent a statistic.</div>
 
   <div class="err" id="visualErr"></div>
 
@@ -300,6 +302,14 @@ input:focus{outline:none;border-color:var(--gold)}
     <div style="text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px" id="cardDisplay"></div>
     <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;padding:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
       Screenshot card → attach to LinkedIn post → people save visuals 3x more
+    </div>
+  </div>
+
+  <div id="statCoverSection" style="display:none">
+    <div class="sec">Stat Cover</div>
+    <div style="text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px" id="statCoverDisplay"></div>
+    <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;padding:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
+      Screenshot → attach as the lead image on your post. Bold stat + your take performs 3-4x better than text alone for this kind of content.
     </div>
   </div>
 </div>
@@ -1227,6 +1237,69 @@ function generateCard(){
 }
 
 function escSVG(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function wrapSvgText(str, maxLen) {
+  const words = (str||'').split(' ');
+  const lines = [];
+  let current = '';
+  words.forEach(w => {
+    if((current+' '+w).trim().length > maxLen) { lines.push(current.trim()); current = w; }
+    else { current = (current+' '+w).trim(); }
+  });
+  if(current) lines.push(current.trim());
+  return lines;
+}
+
+async function generateStatCover(){
+  const text=document.getElementById('visualInput').value.trim();
+  if(!text){showErr('visualErr','Paste your post text first — ideally including a real stat or finding.');return;}
+  if(!checkClaudeKey()) return;
+  hideErr('visualErr');
+
+  try {
+    const raw = await callAPI(
+      `Extract the single most important statistic, number, or bold claim from this text and format it for a visual cover card. CRITICAL: Do NOT invent a new number or claim — only extract and rephrase what is literally present in this text. If no specific stat/claim exists in the text, use its strongest general statement instead, and set "hasStat" to false.\n\nText: "${text.replace(/"/g,"'")}"\n\nReturn ONLY valid JSON: {"headline":"short punchy version max 60 chars, using only what was in the text","subtext":"one supporting sentence, max 90 chars","source":"exact source name if one was mentioned in the text, else empty string","hasStat":true}`,
+      DNA
+    );
+    const s=raw.indexOf('{'), e=raw.lastIndexOf('}')+1;
+    if(s===-1) throw new Error('Could not parse response');
+    const data = JSON.parse(raw.slice(s,e));
+
+    const headlineLines = wrapSvgText(data.headline||'', 26);
+    const subtextLines = wrapSvgText(data.subtext||'', 40);
+
+    let svgContent = `<rect width="540" height="540" fill="#080808"/><rect width="540" height="6" fill="#E0B84D"/>`;
+    svgContent += `<text x="60" y="70" font-family="monospace" font-size="10" letter-spacing="3" fill="#E0B84D">${data.hasStat===false?'OPERATOR TAKE':'THE NUMBER'}</text>`;
+
+    let yPos = 150;
+    headlineLines.slice(0,4).forEach(line => {
+      svgContent += `<text x="60" y="${yPos}" font-family="Georgia,serif" font-size="34" font-weight="700" fill="#F0E8D8" xml:space="preserve">${escSVG(line)}</text>`;
+      yPos += 44;
+    });
+
+    yPos += 20;
+    subtextLines.slice(0,3).forEach(line => {
+      svgContent += `<text x="60" y="${yPos}" font-family="Georgia,serif" font-size="16" fill="#C0B0A0" xml:space="preserve">${escSVG(line)}</text>`;
+      yPos += 26;
+    });
+
+    if(data.source){
+      svgContent += `<text x="60" y="${yPos+20}" font-family="monospace" font-size="11" fill="#7AC8A0">Source: ${escSVG(data.source)}</text>`;
+    }
+
+    svgContent += `<rect x="60" y="460" width="420" height="1" fill="#1e1e1e"/>`;
+    svgContent += `<text x="60" y="490" font-family="Georgia,serif" font-size="14" font-weight="700" fill="#F0E8D8">Balaji Veeramani</text>`;
+    svgContent += `<text x="60" y="508" font-family="Georgia,serif" font-size="11" fill="#666">Director, AI/ML Ops · Enterprise Operator</text>`;
+    svgContent += `<text x="480" y="508" font-family="monospace" font-size="10" fill="#444" text-anchor="end">BCIS · 2026</text>`;
+
+    document.getElementById('statCoverDisplay').innerHTML = `<svg viewBox="0 0 540 540" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:380px;border-radius:6px">${svgContent}</svg>`;
+    document.getElementById('statCoverSection').style.display='block';
+    document.getElementById('statCoverSection').scrollIntoView({behavior:'smooth'});
+  } catch(err){
+    const providerLabel={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider]||'your provider';
+    showErr('visualErr','Stat cover generation failed via '+providerLabel+': '+err.message);
+  }
+}
 
 // ============ ANALYTICS ============
 function renderAnalytics(){updateStats();renderTypeChart();renderAIRecs();}
