@@ -841,9 +841,22 @@ function setSrcTabDirect(tab) {
   document.querySelectorAll('.source-tab').forEach(t=>{if(t.textContent.toLowerCase().includes(tab.substring(0,4))){t.classList.add('active');}});
 }
 
+function cleanSourceLabel(rawSource) {
+  if(!rawSource) return 'an industry source';
+  // Extract the real outlet name after the platform icon/label, e.g. "📰 NewsAPI · TechCrunch" -> "TechCrunch"
+  const parts = rawSource.split('·').map(p=>p.trim());
+  if(parts.length >= 2 && parts[0].includes('NewsAPI')) return parts[1]; // real publication name
+  if(parts[0].includes('HackerNews')) return 'a widely-discussed HackerNews post';
+  if(parts[0].includes('Reddit')) return 'a Reddit discussion in ' + (parts[1] || 'r/artificial');
+  if(parts[0].includes('Dev.to')) return 'a Dev.to article';
+  return rawSource;
+}
+
 function genFromLiveTopic() {
   if(!selectedLiveTopic) return;
-  generate(selectedLiveTopic.title+'. '+selectedLiveTopic.desc, selectedLiveTopic.pillar||'operator', 'commentary');
+  const realSource = cleanSourceLabel(selectedLiveTopic.source);
+  const topicWithSource = `${selectedLiveTopic.title}. ${selectedLiveTopic.desc} [REAL SOURCE: ${realSource} — you must name this exact source, never invent a different or more prestigious-sounding one]`;
+  generate(topicWithSource, selectedLiveTopic.pillar||'operator', 'commentary', realSource);
 }
 
 // ============ BRIEF ============
@@ -1020,7 +1033,7 @@ function routeToBrainDump(promptGuide) {
 
 function genFromCustom(){const v=document.getElementById('customInput').value.trim();if(!v)return;generate(v,activePillar||'operator');}
 
-async function generate(topicText, typeId, mode) {
+async function generate(topicText, typeId, mode, realSourceName) {
   if(!checkClaudeKey()) return;
   hideErr('genErr');
   document.getElementById('genLoading').style.display='block';
@@ -1044,9 +1057,9 @@ async function generate(topicText, typeId, mode) {
     let calls;
     if(isCommentary){
       calls = [
-        callAPI(`MODE B — Live News Commentary. Write Balaji's genuine take on this real news story: ${topicText}. CRITICAL: The first 1-2 sentences must clearly reference what the actual real development is (paraphrased, not a verbatim quote) AND briefly explain any specialized term, jargon, or niche concept in plain language a general reader would understand — do not assume the reader already knows what it means. Do not open with vague industry buzzwords like "systemic crisis" or "the Great Resignation" as if they were established facts; ground the post in the specific real story. This is HIS ANALYSIS as an informed industry voice, not a personal narrative post. Do not force a personal anecdote. State the development, what people are missing, his real analysis, the implication for enterprise AI/leadership readers. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`MODE B — Live News Commentary, alternate angle. Write Balaji's take on this real news story: ${topicText}. CRITICAL: Open by clearly referencing the actual real development (paraphrased) and briefly explaining any specialized term in plain language, before offering the contrarian read — the post must be traceable and comprehensible to a general reader, not generic industry commentary assuming prior knowledge. Slightly more contrarian framing than a typical reaction. No forced personal story. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`MODE B — Live News Commentary, third angle. Write Balaji's take on this real news story: ${topicText}. CRITICAL: Clearly reference the actual real development in the opening, explaining any niche term in plain language, before the pattern-recognition analysis — must be traceable and comprehensible, not vague generalities assuming the reader already knows the topic. Frame it through pattern-recognition from years in enterprise AI/data leadership, in general terms, without naming a specific employer unless one was explicitly requested. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary. Write Balaji's genuine take on this real news story: ${topicText}. CRITICAL: The first sentence must explicitly name the real source in brackets above (e.g. "As reported by TechCrunch..." or "A widely-discussed HackerNews post highlighted...") — never invent a different, fake, or more prestigious-sounding source than the one explicitly given. Then briefly explain any specialized term or jargon in plain language a general reader would understand. Do not open with vague industry buzzwords like "systemic crisis" as if established fact. This is HIS ANALYSIS, not a personal narrative post. Do not force a personal anecdote. State the development, what people are missing, his real analysis, the implication for enterprise AI/leadership readers. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary, alternate angle. Write Balaji's take on this real news story: ${topicText}. CRITICAL: Open by explicitly naming the real source given in brackets above — never invent a different one. Briefly explain any niche term in plain language, before offering the contrarian read. Slightly more contrarian framing than typical. No forced personal story. 220-270 words. Return ONLY post text.`, systemPrompt),
+        callAPI(`MODE B — Live News Commentary, third angle. Write Balaji's take on this real news story: ${topicText}. CRITICAL: Open by explicitly naming the real source given in brackets above — never invent a different one. Explain any niche term in plain language before the pattern-recognition analysis. Frame through pattern-recognition from years in enterprise AI/data leadership, in general terms, no specific employer unless explicitly requested. 220-270 words. Return ONLY post text.`, systemPrompt),
         callAPI(`Generate the best LinkedIn hashtags for a commentary post about: ${topicText}. Author is an enterprise AI operator giving an informed industry take. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`, systemPrompt)
       ];
     } else {
@@ -1067,7 +1080,7 @@ async function generate(topicText, typeId, mode) {
     document.getElementById('genLoading').style.display='none';
     renderVariants(posts,scores,hashData,typeId,
       isCommentary
-        ? {label:'✓ SOURCED FROM LIVE NEWS', color:'#7AC8A0', detail:topicText.split('. ')[0].substring(0,80)}
+        ? {label:'✓ SOURCED FROM LIVE NEWS', color:'#7AC8A0', detail:(realSourceName?realSourceName+' — ':'')+topicText.split('. ')[0].substring(0,70)}
         : (activeSrcTab==='custom' ? {label:'YOUR INPUT', color:'#7EB8D4', detail:'Based on what you typed — verify any facts you included are accurate'} : null)
     );
     updateStats();
