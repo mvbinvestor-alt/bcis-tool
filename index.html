@@ -183,6 +183,7 @@ input:focus{outline:none;border-color:var(--gold)}
     <button class="pill" onclick="setPillar('firstgen',this)">◇ First Gen</button>
     <button class="pill" onclick="setPillar('global',this)">◬ Global</button>
     <button class="pill" onclick="setPillar('value',this)">🎁 Resources</button>
+    <button class="pill" onclick="setPillar('trending',this)">🔥 Trending Roundup</button>
   </div>
 
   <div class="sec">Company Reference — Off Unless You Choose One</div>
@@ -442,8 +443,8 @@ input:focus{outline:none;border-color:var(--gold)}
 <script>
 // ============ CONSTANTS ============
 const NEWS_API_KEY = '79edac0421964e07a4c8144b3ef6b023';
-const COLORS = {operator:'#C8A96E',story:'#7AC8A0',data:'#7EB8D4',culture:'#C47EB8',firstgen:'#C8956E',global:'#9B8EC8',value:'#E0B84D'};
-const ICONS = {operator:'◈',story:'◉',data:'▣',culture:'◎',firstgen:'◇',global:'◬',value:'🎁'};
+const COLORS = {operator:'#C8A96E',story:'#7AC8A0',data:'#7EB8D4',culture:'#C47EB8',firstgen:'#C8956E',global:'#9B8EC8',value:'#E0B84D',trending:'#C47EB8'};
+const ICONS = {operator:'◈',story:'◉',data:'▣',culture:'◎',firstgen:'◇',global:'◬',value:'🎁',trending:'🔥'};
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const CAL_SCHED = {1:{type:'AI',time:'7:30am',color:'#7EB8D4'},2:{type:'Leadership',time:'8:00am',color:'#C8A96E'},3:{type:'Data',time:'7:00am',color:'#9B8EC8'},4:{type:'Story',time:'8:00am',color:'#7AC8A0'},5:{type:'Global',time:'8:00am',color:'#C8956E'},6:{type:'Rest',time:'',color:'#333'},0:{type:'Rest',time:'',color:'#333'}};
 
@@ -959,6 +960,24 @@ function renderSeeds() {
     html += `<div style="grid-column:1/-1;font-size:9px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin:14px 0 6px">OR SHARE YOUR OWN VERIFIED RESOURCE</div>`;
   }
 
+  if(activePillar==='trending'){
+    grid.style.display='block';
+    const isClaudeActive = activeProvider==='claude';
+    const gateWarning = !isClaudeActive ? `<div style="background:#1a0808;border:1px solid #3a1010;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#C47878;font-family:monospace">⚠ This pillar needs live web search, which currently only works when Claude is your active provider. Go to Setup and switch providers to Claude to use this — your other pillars keep working with any provider.</div>` : `<div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#7AC8A0;font-family:monospace">✓ Claude active — live search ready</div>`;
+    grid.innerHTML = `
+      <div style="font-size:9px;color:${COLORS.trending};font-family:monospace;letter-spacing:2px;margin-bottom:10px">🔥 FRESH RESOURCE ROUNDUP — searches live, verifies real links, never invents one</div>
+      ${gateWarning}
+      <div style="font-size:11px;color:var(--dim);font-family:monospace;margin-bottom:8px">Pick a topic or type your own:</div>
+      <div class="pill-row" style="margin-bottom:12px">
+        ${['AI agents','Prompt engineering','MCP servers','Data governance','LLM evaluation','Vibe coding','Enterprise AI adoption'].map(t=>`<button class="pill" onclick="document.getElementById('trendingTopicInput').value='${escJ(t)}'" style="border-color:${COLORS.trending}40;color:${COLORS.trending}">${t}</button>`).join('')}
+      </div>
+      <input type="text" id="trendingTopicInput" placeholder="e.g. AI agents, RAG pipelines, LinkedIn algorithm changes..." style="margin-bottom:12px" />
+      <button class="btn btn-gold btn-full" id="trendingSearchBtn" onclick="generateTrendingRoundup()" ${!isClaudeActive?'disabled':''}>🔥 SEARCH & BUILD ROUNDUP</button>
+    `;
+    return;
+  }
+  grid.style.display='grid';
+
   html += filtered.map(s=>{
     const action = s.routeToBrainDump
       ? `routeToBrainDump('${escJ(s.text)}')`
@@ -1133,7 +1152,10 @@ function renderVariants(variants,scores,hashData,typeId,sourceBadge) {
   </div>`;
 
   wrap.innerHTML=hashPanel+variants.map((text,i)=>{
-    const angle=ANGLES[i];const sc=scores[i];
+    const angle = (typeId==='value') ? {label:'Learning Carousel Caption', color:'#7AC8A0'}
+      : (typeId==='trending') ? {label:'Live Resource Roundup', color:'#C47EB8'}
+      : ANGLES[i];
+    const sc=scores[i];
     const lines=text.split('\n').map((line,li)=>{
       let c='#C0B0A0',fw='normal',fs='13px';
       if(li===0&&line.trim()){c='#F0E8D8';fw='600';fs='14px';}
@@ -1141,7 +1163,7 @@ function renderVariants(variants,scores,hashData,typeId,sourceBadge) {
       const mb=line.trim()===''?'8px':'1px';
       return `<div style="color:${c};font-weight:${fw};font-size:${fs};margin-bottom:${mb}">${escH(line)}</div>`;
     }).join('');
-    const sourceLine = (sourceBadge && sourceBadge.label==='✓ SOURCED FROM LIVE NEWS') ? `\n\n[Reference: ${sourceBadge.detail}]` : '';
+    const sourceLine = (sourceBadge && (sourceBadge.label==='✓ SOURCED FROM LIVE NEWS' || sourceBadge.label==='🔥 LIVE SEARCHED')) ? `\n\n[Reference: ${sourceBadge.detail}]` : '';
     const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+sourceLine+'\n\n'+(hashData.hashtags||[]).slice(0,5).join(' ');
     return `<div class="variant-card" style="border-top:2px solid ${angle.color}">
       <div class="variant-header">
@@ -1356,9 +1378,60 @@ async function callAPI(userMsg, systemPrompt){
   }
 }
 
-async function callClaude(userMsg, sys){
+async function callClaudeWithSearch(userMsg, sys){
+  if(activeProvider !== 'claude') throw new Error('Trending Roundup requires Claude as your active provider for live web search. Switch in Setup.');
+  return callClaude(userMsg, sys, {tools:[{type:'web_search_20250305', name:'web_search'}], maxTokens:1500});
+}
+
+async function generateTrendingRoundup(){
+  const topic = document.getElementById('trendingTopicInput').value.trim();
+  if(!topic){ showErr('genErr','Enter or tap a topic first.'); return; }
+  if(activeProvider !== 'claude'){ showErr('genErr','Switch your active provider to Claude in Setup — this pillar needs live web search.'); return; }
+  if(!checkClaudeKey()) return;
+
+  hideErr('genErr');
+  document.getElementById('genLoading').style.display='block';
+  document.getElementById('variantsSection').style.display='none';
+  totalGenerated++;
+  localStorage.setItem('bcis_generated',totalGenerated);
+
+  try {
+    const roundupText = await callClaudeWithSearch(
+      `Search the web right now for the most current, genuinely valuable, free learning resources on: "${topic}". Look for real tutorials, videos, papers, or guides that are recent and well-regarded — the kind of thing practitioners are actually sharing and recommending right now.
+
+Then write a LinkedIn post in this exact proven format:
+Line 1-2: A hook like "You don't need 100 tutorials. Just these [N] resources on ${topic}:" (adapt naturally)
+Then a numbered list of 5-8 REAL resources you found via search. For each: the resource name, then its ACTUAL URL exactly as it appeared in your search results.
+
+CRITICAL RULES — these are non-negotiable:
+- NEVER construct, guess, or invent a URL. Only use a URL if it literally appeared in your search results.
+- If you find a great resource but cannot verify a real URL for it, list it by name only with no link, clearly stated as "(search for this by name)" — do not fabricate a link to fill space.
+- If you cannot find at least 3 genuinely real resources on this topic, say so honestly in the post rather than padding the list with invented ones.
+- Close with a one-line offer of a "want the basics first" resource if genuinely found, plus a short warm closing line — no fabricated content.
+
+Do not add hashtags, I will add those separately. Return ONLY the post text.`,
+      DNA
+    );
+
+    const hashRaw = await callAPI(
+      `Generate the best LinkedIn hashtags for a resource-roundup post about: ${topic}. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach on a resource-list post"}`
+    );
+    let hashData={hashtags:['#'+topic.replace(/\s+/g,''),'#AILearning','#FreeResources','#DataCulture','#CareerGrowth'],bestTime:'Tue–Thu 7–9am',viralTip:'Resource lists get saved more than liked — the save rate is what drives distribution.'};
+    try{const hs=hashRaw.indexOf('{'),he=hashRaw.lastIndexOf('}')+1;if(hs!==-1)hashData=JSON.parse(hashRaw.slice(hs,he));}catch(e){}
+
+    document.getElementById('genLoading').style.display='none';
+    renderVariants([roundupText], [scorePost(roundupText)], hashData, 'trending', {label:'🔥 LIVE SEARCHED', color:'#C47EB8', detail:'Topic: '+topic+' — verify each link before posting'});
+    updateStats();
+  } catch(err){
+    document.getElementById('genLoading').style.display='none';
+    showErr('genErr','Trending roundup failed: '+err.message);
+  }
+}
+
+async function callClaude(userMsg, sys, opts){
   if(!claudeKey) throw new Error('No Claude API key. Add one in Setup.');
-  const body={model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys||DNA,messages:[{role:'user',content:userMsg}]};
+  const body={model:'claude-sonnet-5',max_tokens:(opts&&opts.maxTokens)||1000,system:sys||DNA,messages:[{role:'user',content:userMsg}]};
+  if(opts && opts.tools) body.tools = opts.tools;
   const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
   const data=await res.json();
   if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
