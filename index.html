@@ -150,6 +150,7 @@ input:focus{outline:none;border-color:var(--gold)}
     <button class="pill" onclick="filterNews('leadership',this)">◎ Leadership</button>
     <button class="pill" onclick="filterNews('data',this)">▣ Data</button>
     <button class="pill" onclick="filterNews('global',this)">◬ Global</button>
+    <button class="pill" onclick="filterNews('immigration',this)">🛂 Immigration</button>
     <button class="pill" onclick="filterNews('firstgen',this)">◇ First Gen</button>
   </div>
 
@@ -182,6 +183,7 @@ input:focus{outline:none;border-color:var(--gold)}
     <button class="pill" onclick="setPillar('culture',this)">◎ Culture</button>
     <button class="pill" onclick="setPillar('firstgen',this)">◇ First Gen</button>
     <button class="pill" onclick="setPillar('global',this)">◬ Global</button>
+    <button class="pill" onclick="setPillar('immigration',this)">🛂 Immigration</button>
     <button class="pill" onclick="setPillar('value',this)">🎁 Resources</button>
     <button class="pill" onclick="setPillar('trending',this)">🔥 Trending Roundup</button>
   </div>
@@ -443,8 +445,8 @@ input:focus{outline:none;border-color:var(--gold)}
 <script>
 // ============ CONSTANTS ============
 const NEWS_API_KEY = '79edac0421964e07a4c8144b3ef6b023';
-const COLORS = {operator:'#C8A96E',story:'#7AC8A0',data:'#7EB8D4',culture:'#C47EB8',firstgen:'#C8956E',global:'#9B8EC8',value:'#E0B84D',trending:'#C47EB8'};
-const ICONS = {operator:'◈',story:'◉',data:'▣',culture:'◎',firstgen:'◇',global:'◬',value:'🎁',trending:'🔥'};
+const COLORS = {operator:'#C8A96E',story:'#7AC8A0',data:'#7EB8D4',culture:'#C47EB8',firstgen:'#C8956E',global:'#9B8EC8',value:'#E0B84D',trending:'#C47EB8',immigration:'#7EB8B8'};
+const ICONS = {operator:'◈',story:'◉',data:'▣',culture:'◎',firstgen:'◇',global:'◬',value:'🎁',trending:'🔥',immigration:'🛂'};
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const CAL_SCHED = {1:{type:'AI',time:'7:30am',color:'#7EB8D4'},2:{type:'Leadership',time:'8:00am',color:'#C8A96E'},3:{type:'Data',time:'7:00am',color:'#9B8EC8'},4:{type:'Story',time:'8:00am',color:'#7AC8A0'},5:{type:'Global',time:'8:00am',color:'#C8956E'},6:{type:'Rest',time:'',color:'#333'},0:{type:'Rest',time:'',color:'#333'}};
 
@@ -480,6 +482,10 @@ const SEEDS = [
   {type:'value',text:'Share a free certification or course you genuinely recommend — name, provider, why it is worth someone\'s time',routeToBrainDump:true},
   {type:'value',text:'Share a real opportunity — a scholarship, program, community, event, or job lead worth passing on',routeToBrainDump:true},
   {type:'value',text:'A monthly roundup: 2-3 free resources you personally found valuable this month, and why each one earned a spot',routeToBrainDump:true},
+  {type:'immigration',text:'What the H-1B cap season actually feels like for the families waiting on it — not the policy summary, the real wait'},
+  {type:'immigration',text:'F-1 students face a harder job market question every year: OPT, STEM extension, and what actually helps land a sponsor'},
+  {type:'immigration',text:'The green card backlog for Indian applicants is a story most people outside the community never hear about'},
+  {type:'immigration',text:'Share a real update on a recent USCIS policy change and what it actually means for someone affected — paste the real detail',routeToBrainDump:true},
 ];
 
 const ANGLES = [
@@ -541,6 +547,8 @@ CRITICAL RULE ON RESOURCES AND OPPORTUNITIES: NEVER invent the name of a specifi
 CRITICAL RULE ON STATISTICS AND RESEARCH CITATIONS: NEVER invent or attribute a specific statistic, percentage, study, or quote to a research firm, analyst house, or publication (Gartner, McKinsey, Forrester, HBR, etc.) unless the user explicitly supplied that exact figure and source in their input for this post. Fabricated statistics attributed to real institutions are a serious credibility risk. If no real source is supplied, either speak in general first-person operator terms with no institutional attribution, or use only statistics that were explicitly provided in the news context for this generation.
 
 CRITICAL RULE ON INVENTING PAST INTENT OR MENTAL STATES: NEVER invent or assume what Balaji (or anyone else) was thinking, hoping, expecting, or intending in the past unless it was explicitly stated. This includes narrative reframes like "I had no idea this would become X" or "what started as a simple Y turned into Z" — these require guessing a past mental state that was never supplied and are frequently wrong. If the user's actual past intent is not stated, do not invent one in either direction (neither "had no idea" nor "always knew") — describe only present facts and the present reaction.
+
+CRITICAL RULE ON IMMIGRATION AND VISA CONTENT: This topic has real legal stakes for readers — F-1 students, H-1B holders, green card applicants making real decisions. NEVER state a specific policy detail, deadline, cap number, processing time, or legal claim as fact unless it was explicitly supplied in the news source or user input for this post. General reflections on the experience of navigating immigration (the wait, the uncertainty, the emotional weight) are fine without a citation. Specific factual/legal claims are not — if uncertain, frame as "I've seen..." personal observation rather than a stated rule, and note that readers should verify specifics with an immigration attorney or official USCIS sources.
 
 BANNED STRUCTURAL PATTERNS — evidenced AI tics to avoid: (1) The contrastive reframe formula "that's not [X], that's [Y]" (e.g. "that's not the watch, that's you showing up") — used once is fine, used as a recurring crutch across messages is a tell, avoid it as a default move. (2) Reciting or summarizing the input's own facts/list back at the reader to prove comprehension (e.g. repeating every stat someone just gave you) — react to ONE specific thing that actually lands, not an inventory. (3) Generic compliment filler with no specific content: "genuinely inspiring," "incredible transformation," "that's incredible" — react with something specific instead of a generic superlative.
 
@@ -677,6 +685,7 @@ async function loadAllNews() {
     fetchHackerNews(),
     fetchReddit(),
     fetchDevTo(),
+    fetchImmigrationNews(),
   ]);
 
   lastNewsFetchTime = Date.now();
@@ -771,6 +780,61 @@ async function fetchReddit() {
   } catch(e){}
 }
 
+async function fetchImmigrationNews() {
+  // NewsAPI — real US immigration/visa policy coverage
+  try {
+    const queries = ['H-1B visa','F-1 student visa','green card immigration','USCIS policy','work visa United States'];
+    const q = queries[Math.floor(Math.random()*queries.length)];
+    let url;
+    if(newsTimeframe==='today'){
+      url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=publishedAt&pageSize=5&language=en&apiKey=${newsKey}`;
+    } else {
+      const daysBack = newsTimeframe==='week' ? 7 : 30;
+      const fromDate = new Date(Date.now()-daysBack*86400000).toISOString().split('T')[0];
+      url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(q)}&sortBy=popularity&from=${fromDate}&pageSize=5&language=en&apiKey=${newsKey}`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    if(data.articles) {
+      data.articles.slice(0,5).forEach(a=>{
+        if(a.title && a.title !== '[Removed]') {
+          allNewsItems.push({
+            source:'🛂 NewsAPI · '+a.source.name,
+            title: a.title,
+            desc: a.description||'',
+            url: a.url,
+            pillar: 'immigration',
+            time: formatTime(a.publishedAt),
+          });
+        }
+      });
+    }
+  } catch(e){}
+
+  // Reddit — real, active immigration-focused communities
+  try {
+    const subs = ['immigration','h1b','USCIS','f1visa'];
+    const sub = subs[Math.floor(Math.random()*subs.length)];
+    const endpoint = newsTimeframe==='today' ? 'hot' : 'top';
+    const tParam = newsTimeframe==='week' ? '&t=week' : newsTimeframe==='month' ? '&t=month' : '';
+    const res = await fetch(`https://www.reddit.com/r/${sub}/${endpoint}.json?limit=5${tParam}`,{headers:{'Accept':'application/json'}});
+    const data = await res.json();
+    data.data.children.slice(0,4).forEach(p=>{
+      const post = p.data;
+      if(post.score>30) {
+        allNewsItems.push({
+          source:'🛂 Reddit · r/'+sub+' · '+post.score+' upvotes',
+          title: post.title,
+          desc: post.selftext ? post.selftext.substring(0,120)+'...' : 'Click to read discussion',
+          url: 'https://reddit.com'+post.permalink,
+          pillar: 'immigration',
+          time: formatTime(new Date(post.created_utc*1000).toISOString()),
+        });
+      }
+    });
+  } catch(e){}
+}
+
 async function fetchDevTo() {
   try {
     const tags = ['ai','machinelearning','career','leadership'];
@@ -793,6 +857,7 @@ async function fetchDevTo() {
 
 function classifyPillar(text) {
   const t = text.toLowerCase();
+  if(/h-?1b|h1-?b|f-?1 visa|green card|uscis|opt extension|stem opt|visa sponsor|work permit|ead card|immigration law|immigration polic/.test(t)) return 'immigration';
   if(/agent|llm|gpt|claude|openai|anthropic|mlops|machine learning|deep learning|neural|ai model|generative|automation/.test(t)) return 'ai';
   if(/leader|ceo|cto|cdo|execut|manag|strateg|board|organiz|culture|team|employ/.test(t)) return 'leadership';
   if(/data|analytics|database|pipeline|warehouse|snowflake|databricks|governance/.test(t)) return 'data';
@@ -1079,7 +1144,7 @@ async function generate(topicText, typeId, mode, realSourceName) {
   totalGenerated++;
   localStorage.setItem('bcis_generated',totalGenerated);
 
-  const typeLabel={operator:'Operator Truth',story:'Human Story',data:'Data Reframe',culture:'Culture Insight',firstgen:'First Gen Voice',global:'Global Vision'}[typeId]||'Operator Truth';
+  const typeLabel={operator:'Operator Truth',story:'Human Story',data:'Data Reframe',culture:'Culture Insight',firstgen:'First Gen Voice',global:'Global Vision',immigration:'Immigration & Visa Insight'}[typeId]||'Operator Truth';
   const newsCtx = allNewsItems.slice(0,3).map(n=>n.title).join(' | ');
   const isCommentary = mode === 'commentary';
   const systemPrompt = DNA + (COMPANY_DETAILS[activeCompany] || '');
