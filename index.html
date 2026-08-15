@@ -158,9 +158,10 @@ input:focus{outline:none;border-color:var(--gold)}
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
     <span class="source-badge" style="background:#1a0a20;color:#9B8EC8;border:1px solid #9B8EC833">📰 NewsAPI</span>
     <span class="source-badge" style="background:#0a1520;color:#7EB8D4;border:1px solid #7EB8D433">🔥 HackerNews</span>
-    <span class="source-badge" style="background:#1a0a00;color:#C8956E;border:1px solid #C8956E33">📡 Google News</span>
     <span class="source-badge" style="background:#0a1a0a;color:#7AC8A0;border:1px solid #7AC8A033">💬 Reddit</span>
     <span class="source-badge" style="background:#1a1000;color:#C8A96E;border:1px solid #C8A96E33">⚡ Dev.to</span>
+    <span class="source-badge" style="background:#0a1a1a;color:#7EB8B8;border:1px solid #7EB8B833">🛂 Immigration (NewsAPI+Reddit)</span>
+    <span class="source-badge" style="background:#1a1a0a;color:#C8A96E;border:1px solid #C8A96E33">🏛️ USCIS Official (best effort)</span>
   </div>
 
   <div class="err" id="newsErr"></div>
@@ -417,7 +418,8 @@ input:focus{outline:none;border-color:var(--gold)}
     <div><span style="color:var(--green)">✓</span> HackerNews — top tech discussions right now</div>
     <div><span style="color:var(--green)">✓</span> Reddit — r/artificial r/MachineLearning r/leadership</div>
     <div><span style="color:var(--green)">✓</span> Dev.to — AI and engineering trends</div>
-    <div><span style="color:var(--green)">✓</span> Google News RSS — breaking business and tech</div>
+    <div><span style="color:var(--green)">✓</span> Immigration — H-1B/F-1/green card via NewsAPI + r/immigration, r/h1b, r/USCIS, r/f1visa</div>
+    <div><span style="color:var(--gold)">◐</span> USCIS Official RSS — real URL wired in, unverified whether it loads past USCIS's bot detection from a browser. Check Live News for whether items with the 🏛️ badge appear.</div>
     <div style="margin-top:8px;color:var(--dim)">Updated every time you open Live News tab</div>
   </div>
 
@@ -686,6 +688,7 @@ async function loadAllNews() {
     fetchReddit(),
     fetchDevTo(),
     fetchImmigrationNews(),
+    fetchUscisOfficial(),
   ]);
 
   lastNewsFetchTime = Date.now();
@@ -775,6 +778,39 @@ async function fetchReddit() {
           pillar: classifyPillar(post.title+' '+sub),
           time: formatTime(new Date(post.created_utc*1000).toISOString()),
         });
+      }
+    });
+  } catch(e){}
+}
+
+async function fetchUscisOfficial() {
+  // Real, user-verified official feed. Could not be verified from this build
+  // environment (blocked by USCIS bot detection on server-side fetch, and
+  // .gov isn't reachable from this tool's network at all) — this needs a
+  // live browser test to know if it actually loads. Fails safely if blocked.
+  try {
+    const res = await fetch('https://www.uscis.gov/news/rss-feed/59144');
+    const text = await res.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'text/xml');
+    const items = xml.querySelectorAll('item');
+    let count = 0;
+    items.forEach(item => {
+      if(count >= 5) return;
+      const title = item.querySelector('title')?.textContent || '';
+      const link = item.querySelector('link')?.textContent || '';
+      const pubDate = item.querySelector('pubDate')?.textContent || '';
+      const description = (item.querySelector('description')?.textContent || '').replace(/<[^>]*>/g,'');
+      if(title){
+        allNewsItems.push({
+          source:'🏛️ USCIS Official',
+          title: title,
+          desc: description.substring(0,150),
+          url: link,
+          pillar: 'immigration',
+          time: pubDate ? formatTime(new Date(pubDate).toISOString()) : 'Recently',
+        });
+        count++;
       }
     });
   } catch(e){}
