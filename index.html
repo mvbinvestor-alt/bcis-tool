@@ -198,6 +198,9 @@ input:focus{outline:none;border-color:var(--gold)}
     <button class="pill company-pill" data-company="hallmark" onclick="setCompany('hallmark',this)">Hallmark / Xoriant</button>
   </div>
 
+  <div class="sec">Your Take — Optional, Biggest Quality Lever</div>
+  <textarea id="takeInput" style="min-height:70px" placeholder="One or two raw lines in your own words: what you actually think, something you saw, who you'd credit. The post gets built around this. Leave empty and it stays general."></textarea>
+
   <div class="sec">02 · Topic Source</div>
   <div class="source-tabs">
     <button class="source-tab active" onclick="setSrcTab('seeds',this)">◈ POWER TOPICS</button>
@@ -215,7 +218,7 @@ input:focus{outline:none;border-color:var(--gold)}
   <div id="srcLive" style="display:none">
     <div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;padding:12px;margin-bottom:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
       Go to <span style="color:var(--green)">🔴 Live News tab</span> → tap any story → tap "Generate Post from This Story"<br>
-      It will bring you here with the real article as context.
+      It brings you here. With Claude as your provider, the tool reads the full article first. Other providers only see the headline.
     </div>
     <div id="liveTopicDisplay" style="display:none">
       <div class="card" style="border-left:3px solid var(--gold)">
@@ -229,7 +232,7 @@ input:focus{outline:none;border-color:var(--gold)}
 
   <div class="loading-center" id="genLoading" style="display:none">
     <div class="dots" style="justify-content:center"><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span><span class="dot" style="background:var(--gold)"></span></div>
-    <div style="font-size:10px;color:var(--dim);font-family:monospace;letter-spacing:3px;margin-top:12px">WRITING 3 VARIANTS · SCORING · FETCHING HASHTAGS</div>
+    <div style="font-size:10px;color:var(--dim);font-family:monospace;letter-spacing:3px;margin-top:12px">WRITING 3 FORMATS</div>
   </div>
 
   <div class="err" id="genErr"></div>
@@ -370,6 +373,11 @@ input:focus{outline:none;border-color:var(--gold)}
       <button class="pill provider-pill" data-provider="deepseek" onclick="setProvider('deepseek',this)">DeepSeek (~Free)</button>
     </div>
     <div id="providerActive" style="font-size:11px;color:var(--green);font-family:monospace;margin-bottom:4px">Active: Claude</div>
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;margin:12px 0 8px">Claude model for writing posts:</div>
+    <div class="pill-row">
+      <button class="pill model-pill" data-model="claude-opus-5-5" onclick="setClaudeModel('claude-opus-5-5',this)">Opus 5.5 · best voice</button>
+      <button class="pill model-pill" data-model="claude-sonnet-5" onclick="setClaudeModel('claude-sonnet-5',this)">Sonnet 5 · cheaper</button>
+    </div>
   </div>
 
   <div class="sec">Claude API Key</div>
@@ -423,14 +431,20 @@ input:focus{outline:none;border-color:var(--gold)}
     <div style="margin-top:8px;color:var(--dim)">Updated every time you open Live News tab</div>
   </div>
 
-  <div class="sec">Your DNA</div>
-  <div class="card" style="font-size:11px;color:var(--muted);font-family:monospace;line-height:2">
-    <div>👤 <span style="color:var(--text)">Balaji Muthukumar Veeramani</span></div>
-    <div>🏢 Director AI/ML Ops · IBM · Toyota · Union Pacific · Hallmark</div>
-    <div>🧠 iD Personality · Tri-Modal Brain · Analytical+Social+Conceptual 95th</div>
-    <div>🌙 Sagittarius Moon · Aquarius Ascendant · Purvashadha Nakshatra</div>
-    <div>🎯 Goal: 1M+ followers · Global Enterprise AI Authority</div>
-    <div>⚠️ <span style="color:#C47878">Verify every fact before publishing. Never claim what you did not do.</span></div>
+  <div class="sec">Your Voice Library</div>
+  <div class="card" style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8">
+    <div id="voiceStatus" style="margin-bottom:12px"></div>
+    <div style="margin-bottom:6px;color:var(--text)">Import your LinkedIn export</div>
+    <div style="margin-bottom:8px">LinkedIn → Settings → Data privacy → Get a copy of your data → pick Posts and Articles. Upload <span style="color:var(--gold)">Shares.csv</span> and any article .html files.</div>
+    <input type="file" accept=".csv,.html,.htm,.txt,.md" multiple onchange="importVoiceFiles(this)" style="margin-bottom:14px;color:var(--muted)" />
+    <div style="margin-bottom:6px;color:var(--text)">Or paste posts</div>
+    <textarea id="voicePaste" style="min-height:90px" placeholder="Paste one or more of your real posts. Separate posts with a line containing only ---"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="addVoicePaste()">ADD TO LIBRARY</button>
+      <button class="btn btn-outline" onclick="clearVoice()">CLEAR THIS DEVICE</button>
+    </div>
+    <div style="margin-top:10px;color:var(--dim)">Saved in this browser. Posts in voice.json in the repo load on every device.</div>
+    <div style="margin-top:6px">⚠️ <span style="color:#C47878">Verify every fact before publishing. Never claim what you did not do.</span></div>
   </div>
 
   <div class="sec">Deploy as App</div>
@@ -473,7 +487,7 @@ const SEEDS = [
   {type:'operator',text:'88% of companies use AI. Only 39% see results. The gap is permission not technology.'},
   {type:'culture',text:'Why the permission gap kills more AI projects than bad models ever will'},
   {type:'story',text:'My mom married at 14. I became a Fortune 100 Director. What she taught me about leading.'},
-  {type:'data',text:'17 years. $100M programs. The one number that actually predicts AI transformation success.'},
+  {type:'data',text:'The one number that actually predicts AI transformation success. It is not the budget.'},
   {type:'firstgen',text:'First-gen professionals carry the hardest enterprise AI skill. Most companies never look for it.'},
   {type:'culture',text:'Leaders who genuinely care get punished. Title collectors get promoted. Here is exactly why.'},
   {type:'global',text:'1.2 billion people need reskilling by 2030. Most enterprise AI strategies miss the real question.'},
@@ -490,75 +504,43 @@ const SEEDS = [
   {type:'immigration',text:'Share a real update on a recent USCIS policy change and what it actually means for someone affected — paste the real detail',routeToBrainDump:true},
 ];
 
-const ANGLES = [
-  {label:'Contrast & Blunt Truth',color:'#C8A96E'},
-  {label:'Personal Story Arc',color:'#7AC8A0'},
-  {label:'Insider Operator View',color:'#7EB8D4'},
-];
+const DNA = `You write LinkedIn posts as Balaji Veeramani, in his own voice. A reader who knows him should not be able to tell a tool was involved.
 
-const DNA = `You are the content intelligence system for Balaji Veeramani.
+WHO HE IS (background for you, not for reciting)
+Enterprise data and AI leader who built his career across India and the US. First-generation graduate. Has led cloud data platform, migration and AI programs inside large enterprises and speaks at AI and data events. Warm and generous, credits people by name, gets openly excited about new technology, and is blunt when something is wrong. A practitioner talking to peers, not a guru and not a résumé.
 
-CRITICAL RULE: Only write content based on what Balaji has actually done. Never fabricate experience. If uncertain, write from his verified background only.
+HOW TO GET HIS VOICE RIGHT
+His real published writing is provided below under HIS REAL WRITING. That is the ground truth. Match its rhythm, sentence length, warmth, punctuation habits, and the way he opens and closes. Do not copy its topics or sentences. Where these instructions and his real writing disagree on style, his real writing wins.
 
-GOAL — BE HONEST ABOUT THIS: The target is the LinkedIn Top Voice blue badge (invite-only, awarded on content quality, originality, consistency, trust — not follower count) within 6-9 months, and steady compounding niche authority growth. NOT rapid follower-count chasing — that is not how LinkedIn works and any content implying "going viral fast" is off-strategy.
+CREDENTIALS
+Do not mention his years of experience, job titles, certifications, awards, "Fortune 100", or any résumé-style summary unless the request contains the line "CREDENTIAL: ALLOWED". Experience should show through what he noticed, never through a claim of seniority. If a credential is allowed, use at most one short clause and never in the first three lines. His career began in 2008, so if years are ever mentioned the figure is 18, never 17.
 
-VERIFIED IDENTITY: Director AI/ML Ops. 17+ years enterprise experience across Fortune 100 companies. First-generation graduate India. PMP CSM ITIL Six Sigma Green Belt NLP Diplomat Practitioner 2010. Visa consulting side business.
+FACTS (hard rules)
+1. Only real things. Never invent events, conversations, meetings, clients, numbers, quotes, or what anyone was thinking at the time.
+2. No statistic, study, or research firm unless it was supplied in this request.
+3. No named employer unless a COMPANY DETAIL block is supplied in this request.
+4. No named course, program, scholarship, or resource unless it was supplied.
+5. Immigration and visa posts: no specific deadlines, caps, fees, processing times, or legal claims unless supplied. Personal observation is fine; point readers to official USCIS sources or an attorney for specifics.
+6. If you do not have a real detail, write the idea plainly rather than faking a specific one.
 
-DO NOT NAME A SPECIFIC EMPLOYER. Credibility comes from "17 years leading enterprise data and AI platforms," "having sat in the room for a dozen cloud migrations," etc — general, true, and verifiable without naming a company. A specific company will only be supplied separately if the user explicitly chose to include one for this post.
+HIS PERSONAL STORIES
+These are real and precious. Use one only when the request asks for a story post or his own take connects to it. Never bolt a family story onto an unrelated tech topic.
+- His mother Veeramani married at 14 and had her first child at 15. Her push for education made Balaji and his brother first-generation graduates; he carries her name as his surname.
+- His daughter Avni was born premature at 34 weeks and spent 3 weeks in the NICU.
+- His father ran Balajee Transport in India with around 50 to 55 employees and lost everything. Balaji was told to avoid the transport business and later worked at Union Pacific Railroad.
+- Ashok Subramanian, his NLP mentor, from 2008.
+- A road trip with his wife to a transport museum near St. Louis.
 
-REAL VOICE EXAMPLES — LEARNED FROM 9 ACTUAL BALAJI POSTS. Match this pattern, not a description of it:
+WHAT MAKES A POST SOUND FAKE (avoid all of these)
+- Opening with a credential, or with scene-setting like "In today's world".
+- Summarising a news story back to the reader instead of reacting to it.
+- The "that's not X, that's Y" reframe. Triplets of abstract nouns. One-sentence-per-line staircase formatting for a whole post.
+- Stock phrases: game-changer, unlock the potential, leverage, robust, holistic, paradigm shift, at the intersection of, rapidly evolving, in today's landscape, as we navigate, it's important to note, excited to share.
+- Generic praise ("incredible", "inspiring") with no specific reason.
+- Ending with a bland "What do you think?" or "Thoughts?".
 
-EXAMPLE 1 (AI bias observation): "As a guest speaker at an AI/ML summit, I discussed AI's capacity to think outside the box... I tested both, noting ChatGPT's superior conversational capabilities compared to Bard. Recently, I had Bard analyze a video of mine... it misinterpreted my views... this incident underscores Bard's rapid progress, which is impressive. However, it also raises concerns about its biased analysis..."
-
-EXAMPLE 2 (data culture panel): "I was posed with a thought-provoking multi-layered question... Is it top-down or bottom-up? By continuously developing our skills, we can adapt to the changing demands of the industry. Did you know that by 2030, it's estimated that 1.2 billion individuals globally will need reskilling... I firmly believe that a successful data culture is a result of both top-down leadership and bottom-up enthusiasm."
-
-EXAMPLE 3 (Union Pacific gratitude/transition): "I want to express my gratitude to Union Pacific Railroad for the opportunity... Despite the recent whirlwind of management reorganization, I understand that UP needs to make tough decisions to advance its vision. When I left Dallas last year for this opportunity, leaving behind many friends and multiple job offers, many asked why I would move to Omaha. My answer has always been driven by my passion for transportation: 'I like to swim against the current.'"
-
-EXAMPLE 4 (LEAD conference award): "I feel incredibly humbled to have been honored with the Develop Award, which I proudly accepted on behalf of all the hardworking members of our incredible LEAD committee. Thank you Katie Novak, April Podraza for roping me in."
-
-EXAMPLE 5 (Women's Day / mom tribute): "I want to express my gratitude to all the women in my life... my heroine, my mom Veeramani. Despite getting married at the age of 14 in an arranged marriage, she went on to become a mother at 15... her persistence and unwavering dedication towards education ensured that my brother and I are the first-generation graduates in our family today. That's the reason why I carry her in my last name as my identity."
-
-EXAMPLE 6 (St. Louis transport museum): "Last weekend, my wife and I went on a road trip to St. Louis... We found a transport museum nearby, and as a kid, I was always fascinated by transportation due to my father's transport business... My dad had around 50 to 55 employees, and he made a considerable fortune from it before losing everything, so I was told to pursue any career except the transport business."
-
-EXAMPLE 7 (Sora / OpenAI launch, raw excitement register): "Alright! It's going to be #Sora! Sora! Sora!!!Everywhere for next few weeks.. Late last night, I was just amazed to see how a text-to-video can become reality with high resolution from #OpenAI. It's an incredible leap of innovation, truly 'The possibilities are infinite' with this new model🚀."
-
-EXAMPLE 8 (Happy New Year, short-and-simple register): "As we step into the New Year, let's carry a heart of #gratitude for the past and an unwavering resolve for the future. Wishing everyone a 2024 brimming with success and new heights. Happy New Year to my #LinkedIn community! Here's to making every moment count. 🙏"
-
-EXAMPLE 9 (full AI bias post, expanded): "Here is what Bard has to say today on my video. Please watch the short video and read through Bard's analysis of it below and evidence the bias 🙂." — tags real companies and real named people at the end (DeepLearning.AI, OpenAI, Alphabet Inc., Google DeepMind, IBM, plus named individuals). Leaves a casual typo in a hashtag uncorrected ("#Facinating"). Direct personal-testing narrative, not abstract commentary.
-
-REAL VOICE PATTERNS (extracted from evidence, not guessed): Every post names and thanks specific real people or companies by name. Opens with a personal moment before any insight, OR is short and simply warm with no story at all (both registers are authentic — not every post needs a narrative arc). Blends professional credibility with vulnerability in the same post. Gratitude-anchored — nearly every post expresses thanks explicitly. Data and facts are used as a bridge to a human point, never standalone. Closes by inviting the community in genuinely. Raw, unfiltered excitement is real and welcome when the topic warrants it (repeated words, extra punctuation, informal capitalization like "Late last night.." are authentic, not to be smoothed into corporate polish). Casual typos are sometimes left uncorrected — perfection is not the voice.
-
-OPTIONAL REGISTER: When an angle specifically calls for it (like a "Contrast" angle), a more direct or contrarian take is available and can perform well for reach. This is a tool to reach for occasionally, not a correction to Balaji's real voice — the warm, gratitude-anchored, named-people pattern above IS his authentic voice and should remain the default across most posts.
-
-VERIFIED STORIES: Mom Veeramani married 14 first child 15 — Balaji first-gen graduate carries her name. Daughter Avni premature 34 weeks 3 weeks NICU. Father trucking company Balajee Transport India lost everything — Balaji told to avoid transport ended at Union Pacific Railroad. NLP mentor Ashok Subramanian 2008. Road trip St Louis transport museum met Doug instantly connected.
-
-PERSONALITY DiSC iD: Balaji's authentic core is warmth — generous, gratitude-driven, genuinely wants to help people grow, credits others by name, leads with encouragement. THIS IS THE DEFAULT, not something to balance out. His secondary D (direct, blunt when a real truth needs saying) is available but occasional — use it only when the specific topic genuinely calls for calling something out, never as a mandatory ingredient in every post. When in doubt, default to warm and generous, not blunt.
-
-EMERGENETICS: Analytical+Social+Conceptual all 95th percentile. Structural 37th. Sagittarius Moon global thinker. Aquarius Ascendant visionary outsider. Purvashadha unstoppable persuader.
-
-CORE BELIEFS — available when genuinely relevant, not forced into every post: AI is often used as a buzzword without real ROI accountability. Leaders who genuinely care deserve more recognition than they get. Culture matters as much as technology. The permission gap is a real obstacle to AI adoption. First-gen operators carry unique, underrated skills.
-
-VOICE: No long dashes. No corporate speak. Short punchy lines. Warm, generous, credits people by name where relevant. Blunt truth is a tool in the kit, not the default setting. 220-270 words.
-
-BANNED PHRASES — never use these or close variants, they read as generic AI-blog filler, not a real person: "I believe", "this requires a fundamental shift", "the implication is clear", "multidisciplinary collaboration", "human-centered approaches", "rapidly evolving", "game-changer", "excited to share", "at the intersection of", "it's important to note", "in today's landscape", "as we navigate", "we must recognize", "unlock the potential", "leverage", "synergy", "robust", "holistic approach", "paradigm shift". If a sentence sounds like it could appear in any generic LinkedIn AI-ethics post from any anonymous author, rewrite it as something only Balaji specifically would say — with a real detail, a real reaction, or real directness.
-
-CRITICAL RULE ON NAMING COMPANIES: Do NOT name a specific employer (IBM, Toyota, Union Pacific, Hallmark, Xoriant) by default. Credibility can come from years of experience, role, or general industry pattern-recognition without naming an employer. Only include a named company if it is explicitly supplied in the request for this specific post. Absence of a company name is the default and correct state, not a gap to fill in.
-
-CRITICAL RULE ON RESOURCES AND OPPORTUNITIES: NEVER invent the name of a specific course, certification, provider, program, scholarship, or opportunity. If a post is about sharing a free resource or opportunity, only reference the exact one supplied in the user's input. If none is supplied, write generally about the type of value worth sharing without naming a fake specific one.
-
-CRITICAL RULE ON STATISTICS AND RESEARCH CITATIONS: NEVER invent or attribute a specific statistic, percentage, study, or quote to a research firm, analyst house, or publication (Gartner, McKinsey, Forrester, HBR, etc.) unless the user explicitly supplied that exact figure and source in their input for this post. Fabricated statistics attributed to real institutions are a serious credibility risk. If no real source is supplied, either speak in general first-person operator terms with no institutional attribution, or use only statistics that were explicitly provided in the news context for this generation.
-
-CRITICAL RULE ON INVENTING PAST INTENT OR MENTAL STATES: NEVER invent or assume what Balaji (or anyone else) was thinking, hoping, expecting, or intending in the past unless it was explicitly stated. This includes narrative reframes like "I had no idea this would become X" or "what started as a simple Y turned into Z" — these require guessing a past mental state that was never supplied and are frequently wrong. If the user's actual past intent is not stated, do not invent one in either direction (neither "had no idea" nor "always knew") — describe only present facts and the present reaction.
-
-CRITICAL RULE ON IMMIGRATION AND VISA CONTENT: This topic has real legal stakes for readers — F-1 students, H-1B holders, green card applicants making real decisions. NEVER state a specific policy detail, deadline, cap number, processing time, or legal claim as fact unless it was explicitly supplied in the news source or user input for this post. General reflections on the experience of navigating immigration (the wait, the uncertainty, the emotional weight) are fine without a citation. Specific factual/legal claims are not — if uncertain, frame as "I've seen..." personal observation rather than a stated rule, and note that readers should verify specifics with an immigration attorney or official USCIS sources.
-
-BANNED STRUCTURAL PATTERNS — evidenced AI tics to avoid: (1) The contrastive reframe formula "that's not [X], that's [Y]" (e.g. "that's not the watch, that's you showing up") — used once is fine, used as a recurring crutch across messages is a tell, avoid it as a default move. (2) Reciting or summarizing the input's own facts/list back at the reader to prove comprehension (e.g. repeating every stat someone just gave you) — react to ONE specific thing that actually lands, not an inventory. (3) Generic compliment filler with no specific content: "genuinely inspiring," "incredible transformation," "that's incredible" — react with something specific instead of a generic superlative.
-
-POST STRUCTURE — TWO MODES, USE THE ONE THAT MATCHES THE REQUEST:
-
-MODE A — Operator Reflection (for Power Topics / Brain Dump): Line 1 attention-grabbing hook, tone matches the angle being written (warm and inviting for most angles, more direct only for a Contrast angle). Lines 2-3 brief credibility from years/role in general terms, NO company name unless one was explicitly supplied. Para 2 specific verified story or pattern, real detail, no fabrication. Para 3 the pattern or lesson an experienced, generous operator would want to pass on. Para 4 named takeaway, warm and quotable. Close with a specific question plus 4-5 hashtags.
-
-MODE B — Live News Reaction (for reacting to a real news story): This is still Balaji's authentic voice — the SAME person who writes personal, warm, direct posts, just reacting to something real he saw. It is NOT a separate "analyst" register and must NOT sound like a corporate blog summarizing a trend. Line 1: a direct, personal reaction to the real development — how HE actually reacts to seeing this, in his own words, not a neutral news-anchor summary. Explain any specialized term in plain, casual language as if explaining it to a friend, not a textbook. Middle: his real, specific, opinionated take — what he actually thinks, stated plainly, not hedged with "I believe" or "this requires." If he has a genuinely real personal connection or experience relevant to this, include it; if not, do not invent one, but still write with personal directness and opinion, not detached analysis. Close with a specific, genuine question — the kind he'd actually ask a colleague — plus 4-5 hashtags.`;
+FORMAT
+Plain text for LinkedIn. No hashtags in the body; they are added separately. No long dashes. Use emoji only where his real writing does for this kind of post. Follow the length and shape given in the request exactly.`;
 
 // Company detail blocks — NEVER included by default. Only appended to the
 // system prompt when the user explicitly selects one in the Post Engine.
@@ -570,6 +552,230 @@ const COMPANY_DETAILS = {
   hallmark: `\n\nCOMPANY DETAIL EXPLICITLY REQUESTED FOR THIS POST — Hallmark / Xoriant (IT Director, digital transformation, 2024-present): Leading migration from MicroStrategy to Power BI plus Power BI Co-Pilot rollout. Driving agile transformation from ADO to a modern framework. Managing a multi-geographic team of approximately 20 across Data Engineering and Advanced Analytics. Leading separate Tableau cloud migration and SAS modernization projects. Working directly with Microsoft, TCS, Salesforce and Infosys. Use this detail naturally since the user explicitly chose to reference this company for this post.`
 };
 let activeCompany = 'none';
+
+// ============ V6: VOICE LIBRARY ============
+// Starter excerpts only. They are replaced by Balaji's real posts once he imports them
+// (Setup → Your Voice Library), or by a voice.json file committed to this repo.
+const SEED_VOICE = [
+  {tag:'ai',text:"As a guest speaker at an AI/ML summit, I discussed AI's capacity to think outside the box... I tested both, noting ChatGPT's superior conversational capabilities compared to Bard. Recently, I had Bard analyze a video of mine... it misinterpreted my views... this incident underscores Bard's rapid progress, which is impressive. However, it also raises concerns about its biased analysis..."},
+  {tag:'leadership',text:"I was posed with a thought-provoking multi-layered question... Is it top-down or bottom-up? By continuously developing our skills, we can adapt to the changing demands of the industry. Did you know that by 2030, it's estimated that 1.2 billion individuals globally will need reskilling... I firmly believe that a successful data culture is a result of both top-down leadership and bottom-up enthusiasm."},
+  {tag:'gratitude',text:"I want to express my gratitude to Union Pacific Railroad for the opportunity... Despite the recent whirlwind of management reorganization, I understand that UP needs to make tough decisions to advance its vision. When I left Dallas last year for this opportunity, leaving behind many friends and multiple job offers, many asked why I would move to Omaha. My answer has always been driven by my passion for transportation: 'I like to swim against the current.'"},
+  {tag:'gratitude',text:"I feel incredibly humbled to have been honored with the Develop Award, which I proudly accepted on behalf of all the hardworking members of our incredible LEAD committee. Thank you Katie Novak, April Podraza for roping me in."},
+  {tag:'story',text:"I want to express my gratitude to all the women in my life... my heroine, my mom Veeramani. Despite getting married at the age of 14 in an arranged marriage, she went on to become a mother at 15... her persistence and unwavering dedication towards education ensured that my brother and I are the first-generation graduates in our family today. That's the reason why I carry her in my last name as my identity."},
+  {tag:'story',text:"Last weekend, my wife and I went on a road trip to St. Louis... We found a transport museum nearby, and as a kid, I was always fascinated by transportation due to my father's transport business... My dad had around 50 to 55 employees, and he made a considerable fortune from it before losing everything, so I was told to pursue any career except the transport business."},
+  {tag:'news',text:"Alright! It's going to be #Sora! Sora! Sora!!!Everywhere for next few weeks.. Late last night, I was just amazed to see how a text-to-video can become reality with high resolution from #OpenAI. It's an incredible leap of innovation, truly 'The possibilities are infinite' with this new model🚀."},
+  {tag:'general',text:"As we step into the New Year, let's carry a heart of #gratitude for the past and an unwavering resolve for the future. Wishing everyone a 2024 brimming with success and new heights. Happy New Year to my #LinkedIn community! Here's to making every moment count. 🙏"},
+  {tag:'news',text:"Here is what Bard has to say today on my video. Please watch the short video and read through Bard's analysis of it below and evidence the bias 🙂. [He then tags DeepLearning.AI, OpenAI, Alphabet Inc., Google DeepMind, IBM and named individuals, and leaves the typo #Facinating uncorrected.]"},
+];
+
+let voiceCorpus = JSON.parse(localStorage.getItem('bcis_voice') || '[]');
+let repoVoice = [];
+
+const PILLAR_TAG = {operator:'leadership',culture:'leadership',data:'ai',global:'ai',story:'story',firstgen:'story',immigration:'immigration',value:'general',trending:'general'};
+
+function autoTag(t){
+  if(/\b(h-?1b|f-?1|opt|green card|uscis|visa|immigra)/i.test(t)) return 'immigration';
+  if(/\b(mom|mother|amma|father|dad|appa|daughter|son|wife|family|avni)\b/i.test(t)) return 'story';
+  if(/\b(thank|grateful|gratitude|humbled|honou?red|congrat)/i.test(t)) return 'gratitude';
+  if(/\b(announce|launch|released|just saw|news|openai|anthropic|google|microsoft|nvidia|meta)\b/i.test(t)) return 'news';
+  if(/\b(ai|ml|llm|genai|model|data|cloud|snowflake|power bi|fabric|agent)/i.test(t)) return 'ai';
+  if(/\b(leader|team|culture|manager|hiring|career)/i.test(t)) return 'leadership';
+  return 'general';
+}
+
+async function loadRepoVoice(){
+  try{
+    const r = await fetch('voice.json', {cache:'no-store'});
+    if(r.ok){ const d = await r.json(); if(Array.isArray(d)) repoVoice = d.filter(x=>x && x.text).map(x=>({text:x.text, tag:x.tag||autoTag(x.text), src:'repo'})); }
+  }catch(e){}
+  renderVoiceStatus();
+}
+
+function ownVoice(){ return [...repoVoice, ...voiceCorpus]; }
+
+function pickVoiceSamples(tag, n){
+  const own = ownVoice().filter(v=>v.text.split(/\s+/).length >= 25);
+  const pool = own.length >= 3 ? own : SEED_VOICE;
+  const ranked = pool.map(v=>({v, s:(v.tag===tag?2:0) + (tag==='news'&&v.tag==='ai'?1:0) + Math.random()*1.5}))
+    .sort((a,b)=>b.s-a.s).slice(0, n||6).map(x=>x.v);
+  return {samples: ranked, isOwn: own.length >= 3};
+}
+
+function voiceBlock(tag){
+  const {samples, isOwn} = pickVoiceSamples(tag, 6);
+  const head = isOwn
+    ? `\n\nHIS REAL WRITING: ${samples.length} of his actual published posts, chosen for this kind of post. This is how he sounds.`
+    : `\n\nHIS REAL WRITING: short excerpts from his real posts ("..." marks cuts). This is how he sounds.`;
+  return head + samples.map((v,i)=>`\n\n=== POST ${i+1} ===\n${v.text.slice(0,1600)}`).join('');
+}
+
+function fullSystem(tag){ return DNA + voiceBlock(tag||'general'); }
+
+// ---- import: LinkedIn export (Shares.csv), article HTML, or plain text ----
+function parseCSV(text){
+  const rows=[]; let row=[], field='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else q=false; } else field+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(field); field=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(field); rows.push(row); row=[]; field=''; }
+    else field+=c;
+  }
+  if(field||row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r=>r.some(f=>f.trim()));
+}
+
+function textsFromCSV(text){
+  const rows = parseCSV(text); if(!rows.length) return [];
+  const head = rows[0].map(h=>h.trim().toLowerCase());
+  let col = head.findIndex(h=>h==='sharecommentary' || h==='commentary' || h==='content' || h==='text' || h==='post');
+  return rows.slice(1).map(r=>{
+    if(col>=0) return r[col]||'';
+    return r.reduce((a,b)=>b.length>a.length?b:a,'');
+  });
+}
+
+function textFromHTML(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,style').forEach(n=>n.remove());
+  return (doc.body ? doc.body.innerText || doc.body.textContent : '').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+function addVoiceTexts(texts, src){
+  const seen = new Set(ownVoice().map(v=>v.text.slice(0,80)));
+  let added = 0;
+  texts.map(t=>(t||'').replace(/\r/g,'').trim()).forEach(t=>{
+    if(t.split(/\s+/).length < 25) return;
+    const key = t.slice(0,80); if(seen.has(key)) return; seen.add(key);
+    voiceCorpus.push({text:t.slice(0,6000), tag:autoTag(t), src:src||'paste', added:Date.now()});
+    added++;
+  });
+  try{ localStorage.setItem('bcis_voice', JSON.stringify(voiceCorpus)); }
+  catch(e){ alert('Browser storage is full. Some posts were not saved.'); }
+  renderVoiceStatus();
+  return added;
+}
+
+async function importVoiceFiles(input){
+  const files = Array.from(input.files||[]); let total = 0;
+  for(const f of files){
+    const raw = await f.text();
+    const name = f.name.toLowerCase();
+    let texts;
+    if(name.endsWith('.csv')) texts = textsFromCSV(raw);
+    else if(name.endsWith('.html')||name.endsWith('.htm')) texts = [textFromHTML(raw)];
+    else texts = raw.split(/\n\s*-{3,}\s*\n/);
+    total += addVoiceTexts(texts, f.name);
+  }
+  input.value = '';
+  alert(total ? `Added ${total} of your posts to the voice library.` : 'No new posts found. Posts under 25 words and duplicates are skipped.');
+}
+
+function addVoicePaste(){
+  const el = document.getElementById('voicePaste');
+  const n = addVoiceTexts(el.value.split(/\n\s*-{3,}\s*\n/), 'paste');
+  if(n){ el.value=''; }
+  alert(n ? `Added ${n} post${n>1?'s':''}.` : 'Nothing added. Paste a full post of at least 25 words.');
+}
+
+function clearVoice(){
+  if(!confirm('Remove all posts you added on this device? Posts in voice.json in the repo stay.')) return;
+  voiceCorpus = []; localStorage.removeItem('bcis_voice'); renderVoiceStatus();
+}
+
+function renderVoiceStatus(){
+  const el = document.getElementById('voiceStatus'); if(!el) return;
+  const own = ownVoice(); const n = own.length;
+  const byTag = own.reduce((m,v)=>{m[v.tag]=(m[v.tag]||0)+1;return m;},{});
+  el.innerHTML = n >= 3
+    ? `<span style="color:var(--green)">✓ Writing from ${n} of your real posts</span>${repoVoice.length?` (${repoVoice.length} from the repo)`:''}<br><span style="color:var(--dim)">${Object.entries(byTag).map(([k,v])=>k+' '+v).join(' · ')}</span>`
+    : `<span style="color:#C8956E">Using 9 short starter excerpts.</span> Add your real posts below. This is the biggest single quality upgrade.`;
+}
+
+// ============ V6: POST LEDGER ============
+let ledger = JSON.parse(localStorage.getItem('bcis_ledger') || '[]');
+let lastVariants = [], lastTypeId = null;
+
+const CRED_RE = /\b(1[5-9]|2\d)\+?\s*(years|yrs)\b|\b(seventeen|eighteen) years\b|\btwo decades\b|fortune\s*100|\b(PMP|ITIL)\b|decades? (of|in) (experience|enterprise)/i;
+const STORY_KEYS = {
+  "his mother's story": /\b(married at 14|my mom|my mother|amma)\b/i,
+  "Avni and the NICU": /\b(avni|nicu)\b/i,
+  "his father's transport business": /\b(my father|my dad|appa|transport business|balajee)\b/i,
+  "his mentor Ashok": /\bashok\b/i,
+  "the St. Louis museum trip": /st\.? louis/i,
+};
+const STOCK_RE = /\b(game[- ]changer|unlock(ing)? the potential|leverag(e|ing)|robust|holistic|paradigm shift|at the intersection of|rapidly evolving|in today'?s (landscape|world)|as we navigate|it'?s important to note|excited to share)\b/gi;
+
+function recentContext(){
+  const cutoff = Date.now() - 30*86400000;
+  const recent = ledger.filter(p=>p.date > cutoff);
+  const usedStories = Object.entries(STORY_KEYS).filter(([,re])=>recent.some(p=>re.test(p.text))).map(([k])=>k);
+  const openers = ledger.slice(0,12).map(p=>(p.text.split('\n').find(l=>l.trim())||'').trim().slice(0,110)).filter(Boolean);
+  const credAllowed = !ledger.slice(0,5).some(p=>CRED_RE.test(p.text));
+  return {usedStories, openers, credAllowed};
+}
+
+function ledgerBlock(ctx){
+  const parts = [];
+  if(ctx.usedStories.length) parts.push(`Stories already used in the last 30 days, do not use them again: ${ctx.usedStories.join('; ')}.`);
+  if(ctx.openers.length) parts.push(`His recent opening lines. Do not open the same way or with the same structure:\n${ctx.openers.map(o=>'- '+o).join('\n')}`);
+  return parts.length ? `\n\nRECENTLY PUBLISHED\n${parts.join('\n')}` : '';
+}
+
+function markPosted(i, btn){
+  const text = lastVariants[i]; if(!text) return;
+  ledger.unshift({date:Date.now(), text, type:lastTypeId});
+  ledger = ledger.slice(0,200);
+  localStorage.setItem('bcis_ledger', JSON.stringify(ledger));
+  const day = new Date().getDay(); const key = getWeekKey()+'_'+day;
+  if(!postedDays[key]){ postedDays[key]=true; localStorage.setItem('bcis_posted_days', JSON.stringify(postedDays)); }
+  renderCalendar(); updateStats();
+  btn.textContent='✓ LOGGED'; btn.disabled=true; btn.style.opacity='0.6';
+}
+
+// ============ V6: FORMATS ============
+const FORMATS = [
+  {key:'take', label:'Short & sharp', color:'#C8A96E', min:50, max:120,
+   spec:'FORMAT: a short, sharp take. 50 to 110 words. One idea only. No story, no credential, no setup paragraph. The first line is the point itself. End on a strong closing line, not a question.'},
+  {key:'story', label:'Story-led', color:'#7AC8A0', min:160, max:270,
+   spec:'FORMAT: story-led, 170 to 260 words, in normal paragraphs (not one sentence per line). Open inside a real moment: from his own take if he gave one, or one of his personal stories only if it genuinely connects and has not been used recently. If nothing real connects, open with the specific thing he noticed about this topic instead of inventing a scene. Let the point emerge from the moment. Close by crediting someone or inviting people in, whichever fits.'},
+  {key:'breakdown', label:'Breakdown', color:'#7EB8D4', min:130, max:230,
+   spec:'FORMAT: a practical breakdown, 140 to 220 words. Start with what most people get wrong about this, then 3 or 4 concrete points he would actually tell a colleague, in his words. Short numbered lines are fine here. Close with one specific question for people doing this work, not a generic one.'},
+];
+
+// ============ V6: LIVE ARTICLE READING ============
+async function getArticleBrief(story){
+  if(activeProvider!=='claude' || !story || !/^https?:\/\//.test(story.url||'')) return null;
+  try{
+    const txt = await callClaude(
+      `Use web_fetch to read ${story.url} . Then write a plain factual brief of what the page actually says, 120 to 180 words: what happened, who is involved, key specifics and numbers exactly as stated, and anything genuinely surprising. No opinion, no preamble. If the page cannot be read, reply with exactly: UNREADABLE`,
+      'You are a careful research assistant. Report only what the page says. Output only the brief.',
+      {tools:[{type:'web_fetch_20250910', name:'web_fetch', max_uses:2}], beta:'web-fetch-2025-09-10', maxTokens:700, model:'claude-sonnet-5', lastTextOnly:true}
+    );
+    if(!txt || /UNREADABLE/.test(txt) || txt.split(/\s+/).length < 40) return null;
+    return txt.trim();
+  }catch(e){ return null; }
+}
+
+// ============ V6: VOICE CHECK (replaces the old viral score) ============
+function scorePost(text, fmt){
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const first = (text.split('\n').find(l=>l.trim())||'').trim();
+  const flags = [];
+  if(CRED_RE.test(text)) flags.push('mentions years/credentials');
+  const stock = [...new Set((text.match(STOCK_RE)||[]).map(s=>s.toLowerCase()))];
+  if(stock.length) flags.push('stock phrase: '+stock.join(', '));
+  if(/\b(that'?s|it'?s|this is) not (just )?[^.]{2,40}[,.;] ?(that'?s|it'?s|this is)\b/i.test(text)) flags.push('"not X, it\'s Y" reframe');
+  if(/(what do you think|thoughts)\?\s*$/i.test(text.replace(/(#\w+\s*)+$/,'').trim())) flags.push('bland closing question');
+  if(first.length > 110) flags.push('long first line');
+  const recentStories = recentContext().usedStories;
+  Object.entries(STORY_KEYS).forEach(([k,re])=>{ if(recentStories.includes(k) && re.test(text)) flags.push('reuses '+k); });
+  const range = fmt ? [fmt.min, fmt.max] : [0, 9999];
+  const inRange = words>=range[0] && words<=range[1];
+  return {words, flags, inRange, hook: first.length<=80?'Tight':first.length<=110?'OK':'Long'};
+}
+
 
 // ============ STATE ============
 let claudeKey = localStorage.getItem('bcis_claude_key') || '';
@@ -606,6 +812,8 @@ window.onload = () => {
   if(groqKey){document.getElementById('groqKeyInput').value='••••••••••••••••••••';document.getElementById('groqStatus').textContent='✓ Loaded';document.getElementById('groqStatus').style.color='var(--green)';}
   if(deepseekKey){document.getElementById('deepseekKeyInput').value='••••••••••••••••••••';document.getElementById('deepseekStatus').textContent='✓ Loaded';document.getElementById('deepseekStatus').style.color='var(--green)';}
   highlightActiveProvider();
+  highlightClaudeModel();
+  loadRepoVoice();
   if(newsKey){document.getElementById('newsKeyInput').value='••••••••••••••••••••';document.getElementById('newsStatus').textContent='✓ NewsAPI key loaded';document.getElementById('newsStatus').style.color='var(--green)';}
 
   renderSeeds();
@@ -931,7 +1139,7 @@ function renderNewsGrid() {
       </div>
       <div class="news-title">${escH(item.title)}</div>
       ${item.desc?`<div class="news-desc">${escH(item.desc.substring(0,120))}${item.desc.length>120?'...':''}</div>`:''}
-      <div class="news-angle">Balaji's angle: What does a 17-year enterprise operator see that others miss in this story?</div>
+      <div class="news-angle">Your angle: what do you see in this that others will miss?</div>
       <button class="news-btn" onclick="selectLiveStory(${i})">→ Generate Post from This Story</button>
     </div>`).join('');
 }
@@ -960,7 +1168,7 @@ function cleanSourceLabel(rawSource) {
   // Extract the real outlet name after the platform icon/label, e.g. "📰 NewsAPI · TechCrunch" -> "TechCrunch"
   const parts = rawSource.split('·').map(p=>p.trim());
   if(parts.length >= 2 && parts[0].includes('NewsAPI')) return parts[1]; // real publication name
-  if(parts[0].includes('HackerNews')) return 'a widely-discussed HackerNews post';
+  if(parts[0].includes('HackerNews')){ try{ const h=new URL(selectedLiveTopic&&selectedLiveTopic.url).hostname.replace(/^www\./,''); if(h!=='news.ycombinator.com') return h+' (trending on Hacker News)'; }catch(e){} return 'a Hacker News discussion'; }
   if(parts[0].includes('Reddit')) return 'a Reddit discussion in ' + (parts[1] || 'r/artificial');
   if(parts[0].includes('Dev.to')) return 'a Dev.to article';
   return rawSource;
@@ -969,8 +1177,7 @@ function cleanSourceLabel(rawSource) {
 function genFromLiveTopic() {
   if(!selectedLiveTopic) return;
   const realSource = cleanSourceLabel(selectedLiveTopic.source);
-  const topicWithSource = `${selectedLiveTopic.title}. ${selectedLiveTopic.desc} [REAL SOURCE: ${realSource} — you must name this exact source, never invent a different or more prestigious-sounding one]`;
-  generate(topicWithSource, selectedLiveTopic.pillar||'operator', 'commentary', realSource);
+  generate(selectedLiveTopic.title, selectedLiveTopic.pillar||'operator', 'commentary', realSource, selectedLiveTopic);
 }
 
 // ============ BRIEF ============
@@ -989,7 +1196,7 @@ async function loadBrief() {
 
 ${newsContext ? `Real news happening right now: ${newsContext}` : ''}
 
-Based on these real stories and current trends, generate 3 highly specific content recommendations using the 4-3-2-1 blend formula. Each must be something Balaji can authentically speak to from his verified 17-year enterprise career. Do NOT name a specific employer by default — general terms like "17 years leading enterprise data platforms" are correct, a named company only if truly essential to a specific verified story (like his father's transport business connecting to Union Pacific).
+Based on these real stories and current trends, generate 3 highly specific content recommendations using the 4-3-2-1 blend formula. Each must be something Balaji can genuinely speak to from his own work. Do not mention his years of experience or credentials, and do not name a specific employer.
 
 Return ONLY valid JSON array:
 [{"type":"AI","day":"Today","topic":"Specific topic Balaji can authentically comment on","angle":"Unique operator angle from his general enterprise experience, no company name by default"},{"type":"Leadership","day":"Thursday","topic":"Leadership topic","angle":"A warm, genuine truth from real experience"},{"type":"Human Story","day":"Saturday","topic":"Human story angle","angle":"How his real personal story connects"}]`);
@@ -1009,7 +1216,7 @@ Return ONLY valid JSON array:
 
 const STATIC_RECS=[
   {type:'AI',day:'Today',topic:'The AI pilot graveyard — 88% of enterprise AI never reaches production',angle:"Balaji watched this pattern across Toyota's mainframe-to-cloud migration and IBM's DirecTV integration work. The model isn't the problem — accountability structure is."},
-  {type:'Leadership',day:'Thursday',topic:'C-suite AI theater — collecting tools without owning outcomes',angle:"His blunt D truth from 17 years: leaders adding AI to resume without shipping ROI are lying to their board."},
+  {type:'Leadership',day:'Thursday',topic:'C-suite AI theater — collecting tools without owning outcomes',angle:"His blunt truth: leaders adding AI to their résumé without shipping ROI are misleading their board."},
   {type:'Human Story',day:'Saturday',topic:'My daughter Avni fought 3 weeks in NICU. 1.2B people face a different fight by 2030.',angle:"Connect her verified fighting spirit to the reskilling crisis. Real. Powerful. Only Balaji can write this."},
 ];
 
@@ -1019,7 +1226,7 @@ function renderBriefRecs(recs) {
   const wrap=document.getElementById('briefRecs');
   wrap.innerHTML='<div class="sec">Today\'s Recommendations — Based on Live News</div>'+recs.map(r=>{
     const tc=REC_TAGS[r.type]||REC_TAGS['AI'];
-    const prompt=`Write a LinkedIn post for Balaji Veeramani on: "${r.topic}". Use ONLY his verified experience. iD voice — show BOTH warm I and blunt D. Operator Arc. 220-270 words. Return only post text.`;
+    const prompt=`Write a LinkedIn post in Balaji Veeramani's voice on: "${r.topic}". Use only real, verified experience. Do not mention his years of experience or credentials. 120-220 words, in normal paragraphs. Return only the post text.`;
     return `<div class="card" style="border-left:3px solid ${tc.c};margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:${tc.bg};color:${tc.c};font-family:monospace">${r.type}</span>
@@ -1120,13 +1327,13 @@ async function generateLearningCarousel(resourceIndex) {
     // Generate the accompanying post text (sourced, verified)
     const postText = await callAPI(
       `Write a short LinkedIn caption (100-150 words) for Balaji Veeramani introducing a free learning resource he is sharing with his network. This resource is REAL and VERIFIED — do not alter any facts about it: ${resourceFact}. Warm, generous tone, genuinely wants to help people grow. Mention this is going with a carousel walking through it. End with an invitation to save/share and a question. 3-4 hashtags. Return ONLY the caption text.`,
-      DNA
+      fullSystem('general')
     );
     // Generate the carousel structure using the research-backed pattern:
     // bold hook creating a knowledge gap, then a clear saveable framework
     const carouselRaw = await callAPI(
       `Create a 6-slide LinkedIn educational carousel for Balaji Veeramani about this REAL verified resource — do not alter any facts: ${resourceFact}\n\nFollow this proven structure: Slide 1 is a bold hook creating a "knowledge gap" (a surprising question or claim that makes people want to swipe). Slides 2-5 break down why this resource matters and what it actually teaches, one clear idea per slide, tactical and saveable. Slide 6 is the resource name/provider clearly stated plus a call to action.\n\nReturn ONLY valid JSON array:\n[{"slideNum":1,"label":"HOOK","headline":"...","body":"...","style":"dark"},{"slideNum":2,"label":"WHY THIS MATTERS","headline":"...","body":"...","style":"light"},{"slideNum":3,"label":"WHAT YOU LEARN","headline":"...","body":"...","style":"dark"},{"slideNum":4,"label":"WHO IT'S FOR","headline":"...","body":"...","style":"light"},{"slideNum":5,"label":"HOW TO START","headline":"...","body":"...","style":"dark"},{"slideNum":6,"label":"THE RESOURCE","headline":"${escSVG(r.name)}","body":"${escSVG(r.provider+' · Free · '+r.url)}","style":"gold"}]`,
-      DNA
+      fullSystem('general')
     );
 
     const s=carouselRaw.indexOf('['),e=carouselRaw.lastIndexOf(']')+1;
@@ -1165,15 +1372,16 @@ function routeToBrainDump(promptGuide) {
 
 function genFromCustom(){const v=document.getElementById('customInput').value.trim();if(!v)return;generate(v,activePillar||'operator');}
 
-async function generate(topicText, typeId, mode, realSourceName) {
+async function generate(topicText, typeId, mode, realSourceName, story) {
   if(!checkClaudeKey()) return;
   hideErr('genErr');
-  document.getElementById('genLoading').style.display='block';
+  const loading = document.getElementById('genLoading');
+  const loadingSub = loading.querySelector('div:last-child');
+  loading.style.display='block';
   document.getElementById('variantsSection').style.display='none';
 
   if(isNewsStale()){
-    const loadingSub=document.querySelector('#genLoading div:last-child');
-    if(loadingSub) loadingSub.textContent='Refreshing today\'s news before writing...';
+    if(loadingSub) loadingSub.textContent='REFRESHING NEWS';
     await ensureFreshNewsBeforePosting();
   }
 
@@ -1181,95 +1389,96 @@ async function generate(topicText, typeId, mode, realSourceName) {
   localStorage.setItem('bcis_generated',totalGenerated);
 
   const typeLabel={operator:'Operator Truth',story:'Human Story',data:'Data Reframe',culture:'Culture Insight',firstgen:'First Gen Voice',global:'Global Vision',immigration:'Immigration & Visa Insight'}[typeId]||'Operator Truth';
-  const newsCtx = allNewsItems.slice(0,3).map(n=>n.title).join(' | ');
   const isCommentary = mode === 'commentary';
-  const systemPrompt = DNA + (COMPANY_DETAILS[activeCompany] || '');
+  const take = ((document.getElementById('takeInput')||{}).value||'').trim();
+  const ctx = recentContext();
+  const tag = isCommentary ? 'news' : (PILLAR_TAG[typeId]||'general');
+  const systemPrompt = fullSystem(tag) + (COMPANY_DETAILS[activeCompany] || '');
 
   try {
-    let calls;
+    let subject;
+    let sourceDetail = '';
     if(isCommentary){
-      const banList = `Do NOT use: "I believe", "this requires a fundamental shift", "the implication is clear", "multidisciplinary collaboration", "human-centered approaches", "we must recognize", "unlock the potential", "at the intersection of", "it's important to note". If a line could appear in any generic AI-ethics LinkedIn post from an anonymous author, cut it and write something only Balaji would actually say.`;
-      calls = [
-        callAPI(`Write Balaji's real, personal, opinionated reaction to this real news story: ${topicText}. This is the SAME warm, direct person as his other posts — not a neutral analyst summarizing a trend. Open with how he genuinely reacted to seeing this, first person, casual and direct — not a news-anchor-style statement of the development. Explicitly name the real source given in brackets above, naturally, mid-sentence is fine — never invent a different one. Explain any niche term like you're explaining it to a friend over coffee, not a textbook. State his actual opinion plainly — agree, disagree, or complicate it, but have a real point of view, not hedged analysis. ${banList} Close with a specific question he'd actually ask a colleague. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`Write Balaji's real reaction to this news story: ${topicText}, more direct and slightly contrarian than typical — what does he think most people are getting wrong? Same warm-but-blunt personal voice as always, first person, opinionated. Explicitly name the real source given in brackets above naturally in the text — never invent a different one. Explain any niche term casually. ${banList} 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`Write Balaji's real reaction to this news story: ${topicText}, framed through what years of pattern-recognition in enterprise data/AI have taught him — in general terms, no specific employer unless explicitly requested, but still personal and opinionated, not detached analysis. Explicitly name the real source given in brackets above naturally — never invent a different one. Explain any niche term casually. ${banList} 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`Generate the best LinkedIn hashtags for a personal reaction post about: ${topicText}. Author is an enterprise AI operator giving a genuine, direct take. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`, systemPrompt)
-      ];
+      let brief = null;
+      if(activeProvider==='claude' && story && story.url){
+        if(loadingSub) loadingSub.textContent='READING THE ARTICLE';
+        brief = await getArticleBrief(story);
+      }
+      const desc = (story && story.desc && !/^Score:/.test(story.desc)) ? story.desc : '';
+      subject = `POST TYPE: his reaction to a real news story.
+HEADLINE: ${story ? story.title : topicText}
+SOURCE: ${realSourceName||'the original article'}. Name this source naturally once. Never swap in a different or grander source.
+${brief ? 'WHAT THE ARTICLE ACTUALLY SAYS:\n'+brief : 'ONLY THE HEADLINE'+(desc?' AND THIS SUMMARY ARE':' IS')+' AVAILABLE. '+(desc?'Summary: '+desc+'\n':'')+'You do not know the details beyond this. Do not pretend to. React to what is actually claimed and say plainly what he would want to know.'}
+React to it; do not summarise it back. Explain any specialised term in one casual clause, the way he would to a friend.`;
+      sourceDetail = (realSourceName?realSourceName+' — ':'') + (story?story.title:topicText).substring(0,70) + (brief?' · article read':' · headline only');
     } else {
-      calls = [
-        callAPI(`MODE A — Operator Reflection. Write a LinkedIn post for Balaji Veeramani using Contrast and Blunt Truth angle. Show his D personality — blunt operator truth. Post type: ${typeLabel}. Topic: ${topicText}. ${newsCtx?'Current news context (for awareness only, not to force a company anecdote): '+newsCtx:''} Use ONLY verified experience. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`MODE A — Operator Reflection. Write a LinkedIn post for Balaji Veeramani using Personal Story Arc angle. Show his I personality — warm human authentic. Post type: ${typeLabel}. Topic: ${topicText}. Use ONLY verified personal stories. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`MODE A — Operator Reflection. Write a LinkedIn post for Balaji Veeramani using Insider Operator View angle. Blend both I and D. Post type: ${typeLabel}. Topic: ${topicText}. Draw on verified 17yr career in general terms. 220-270 words. Return ONLY post text.`, systemPrompt),
-        callAPI(`Generate the best LinkedIn hashtags for March 2026 for a post about: ${topicText}. Author is enterprise AI operator first-gen immigrant. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5","#tag6","#tag7","#tag8"],"bestTime":"Best time to post","viralTip":"One specific tip for maximum reach"}`, systemPrompt)
-      ];
+      subject = `POST TYPE: ${typeLabel}\nTOPIC: ${topicText}`;
     }
-    const [p1,p2,p3,hashRaw]=await Promise.all(calls);
 
-    let hashData={hashtags:['#AIinEnterprise','#DataCulture','#Leadership','#MLOps','#AITransformation','#OperatorLessons','#FirstGenInTech','#FutureOfWork'],bestTime:'Tue–Thu 7–9am',viralTip:'Reply to every comment within 60 minutes to trigger algorithmic boost.'};
+    const takeBlock = take
+      ? `\n\nHIS OWN TAKE (build the post around this; keep his exact words and phrasing wherever they work; do not contradict or embellish it):\n"${take}"`
+      : `\n\nHe has not given his own take on this one. Keep it honest: have a clear point of view on the topic itself, and do not invent personal experiences, meetings, or numbers to fill the gap.`;
+    const history = ledgerBlock(ctx);
+
+    if(loadingSub) loadingSub.textContent='WRITING 3 FORMATS';
+    const calls = FORMATS.map(f=>{
+      const cred = (f.key==='breakdown' && ctx.credAllowed) ? '\nCREDENTIAL: ALLOWED (optional; at most one short clause; never in the first three lines)' : '';
+      return callAPI(`${subject}${takeBlock}${history}\n\n${f.spec}${cred}\n\nReturn ONLY the post text.`, systemPrompt);
+    });
+    const monthYear = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    calls.push(callAPI(`Suggest LinkedIn hashtags for a post about: ${story?story.title:topicText}. It is ${monthYear}. Author: enterprise data and AI leader. Prefer specific, active tags over generic ones. Return ONLY valid JSON: {"hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"],"bestTime":"best time to post","viralTip":"one specific, non-generic tip for this post"}`, 'You return only valid JSON. No prose.'));
+
+    const results = await Promise.all(calls);
+    const posts = results.slice(0,3).map(p=>p.replace(/\n(#\w+\s*)+$/,'').trim());
+    const hashRaw = results[3];
+
+    let hashData={hashtags:['#EnterpriseAI','#DataLeadership','#AI','#DataCulture'],bestTime:'Tue–Thu 7–9am',viralTip:'Reply to every comment in the first hour.'};
     try{const hs=hashRaw.indexOf('{'),he=hashRaw.lastIndexOf('}')+1;if(hs!==-1)hashData=JSON.parse(hashRaw.slice(hs,he));}catch(e){}
 
-    const posts=[p1,p2,p3];
-    const scores=posts.map(p=>scorePost(p));
-    document.getElementById('genLoading').style.display='none';
+    const scores = posts.map((p,i)=>scorePost(p, FORMATS[i]));
+    loading.style.display='none';
     renderVariants(posts,scores,hashData,typeId,
       isCommentary
-        ? {label:'✓ SOURCED FROM LIVE NEWS', color:'#7AC8A0', detail:(realSourceName?realSourceName+' — ':'')+topicText.split('. ')[0].substring(0,70)}
-        : (activeSrcTab==='custom' ? {label:'YOUR INPUT', color:'#7EB8D4', detail:'Based on what you typed — verify any facts you included are accurate'} : null)
+        ? {label:'✓ SOURCED FROM LIVE NEWS', color:'#7AC8A0', detail:sourceDetail}
+        : (activeSrcTab==='custom' ? {label:'YOUR INPUT', color:'#7EB8D4', detail:'Based on what you typed. Check any facts you included.'} : null),
+      FORMATS
     );
     updateStats();
   } catch(e) {
-    document.getElementById('genLoading').style.display='none';
+    loading.style.display='none';
     const providerLabel={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider]||'your provider';
     showErr('genErr','Generation failed via '+providerLabel+': '+e.message+'. Check your '+providerLabel+' account/key in Setup.');
   }
 }
 
-function scorePost(text) {
-  let score=0;
-  const first=(text.split('\n').find(l=>l.trim())||'');
-  if(first.length<60)score+=25;else if(first.length<90)score+=15;else score+=5;
-  if(/\d+/.test(text))score+=15;
-  if(/\?/.test(text))score+=10;
-  const words=text.split(/\s+/).length;
-  if(words>=200&&words<=280)score+=15;
-  if(/\b(I|my|me|we)\b/i.test(text))score+=10;
-  if(/\b(but|not|wrong|fail|gap|truth|nobody|only)\b/i.test(text))score+=10;
-  if(/\b(Union Pacific|Toyota|IBM|Hallmark|Deloitte)\b/.test(text))score+=15;
-  score=Math.min(score,99);
-  const label=score>=80?'🔥 High':score>=60?'⚡ Strong':'📈 Good';
-  const color=score>=80?'#7AC8A0':score>=60?'#C8A96E':'#7EB8D4';
-  const hook=/\b(not|why|wrong|fail|only|never|nobody)\b/i.test(first)&&first.length<70?'Strong':first.length<90?'Good':'Weak';
-  const hookColor=hook==='Strong'?'#7AC8A0':hook==='Good'?'#C8A96E':'#C47878';
-  return{score,label,color,hook,hookColor,words};
-}
-
-function renderVariants(variants,scores,hashData,typeId,sourceBadge) {
+function renderVariants(variants,scores,hashData,typeId,sourceBadge,formats) {
   const section=document.getElementById('variantsSection');
   const wrap=document.getElementById('variantsWrap');
   section.style.display='block';
+  lastVariants = variants.slice(); lastTypeId = typeId;
 
   const badge = sourceBadge ? `<div style="background:${sourceBadge.color}18;border:1px solid ${sourceBadge.color}60;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
     <span style="font-size:11px;font-weight:700;color:${sourceBadge.color};font-family:monospace">${sourceBadge.label}</span>
-    ${sourceBadge.detail?`<span style="font-size:11px;color:var(--muted)">${sourceBadge.detail}</span>`:''}
+    ${sourceBadge.detail?`<span style="font-size:11px;color:var(--muted)">${escH(sourceBadge.detail)}</span>`:''}
   </div>` : `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:10px">
     <span style="font-size:11px;font-weight:700;color:var(--dim);font-family:monospace">○ OPERATOR INSIGHT</span>
     <span style="font-size:11px;color:var(--dim)"> — general perspective, no external citation. Verify before posting.</span>
   </div>`;
 
   const hashPanel=badge+`<div style="background:#0a1a0a;border:1px solid #1a3a1a;border-radius:8px;padding:14px;margin-bottom:12px">
-    <div style="font-size:8px;letter-spacing:4px;color:var(--green);font-family:monospace;margin-bottom:8px">LIVE HASHTAG INTELLIGENCE</div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${(hashData.hashtags||[]).map(h=>`<span style="background:#0d2a0d;border:1px solid #1a4a1a;color:var(--green);padding:3px 9px;border-radius:99px;font-size:10px;font-family:monospace">${h}</span>`).join('')}</div>
+    <div style="font-size:8px;letter-spacing:4px;color:var(--green);font-family:monospace;margin-bottom:8px">HASHTAGS</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${(hashData.hashtags||[]).map(h=>`<span style="background:#0d2a0d;border:1px solid #1a4a1a;color:var(--green);padding:3px 9px;border-radius:99px;font-size:10px;font-family:monospace">${escH(h)}</span>`).join('')}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;flex:1;min-width:120px"><div style="font-size:8px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin-bottom:3px">BEST TIME</div><div style="font-size:12px;color:var(--gold)">${hashData.bestTime||'Tue–Thu 7–9am'}</div></div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;flex:2;min-width:150px"><div style="font-size:8px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin-bottom:3px">VIRAL TIP</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${hashData.viralTip||'Reply within 60 min.'}</div></div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;flex:1;min-width:120px"><div style="font-size:8px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin-bottom:3px">BEST TIME</div><div style="font-size:12px;color:var(--gold)">${escH(hashData.bestTime||'Tue–Thu 7–9am')}</div></div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;flex:2;min-width:150px"><div style="font-size:8px;color:var(--dim);font-family:monospace;letter-spacing:2px;margin-bottom:3px">TIP</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${escH(hashData.viralTip||'Reply within 60 min.')}</div></div>
     </div>
   </div>`;
 
   wrap.innerHTML=hashPanel+variants.map((text,i)=>{
     const angle = (typeId==='value') ? {label:'Learning Carousel Caption', color:'#7AC8A0'}
       : (typeId==='trending') ? {label:'Live Resource Roundup', color:'#C47EB8'}
-      : ANGLES[i];
-    const sc=scores[i];
+      : (formats && formats[i]) ? formats[i] : {label:'Post', color:'#C8A96E'};
+    const sc=scores[i]||scorePost(text);
     const lines=text.split('\n').map((line,li)=>{
       let c='#C0B0A0',fw='normal',fs='13px';
       if(li===0&&line.trim()){c='#F0E8D8';fw='600';fs='14px';}
@@ -1277,22 +1486,26 @@ function renderVariants(variants,scores,hashData,typeId,sourceBadge) {
       const mb=line.trim()===''?'8px':'1px';
       return `<div style="color:${c};font-weight:${fw};font-size:${fs};margin-bottom:${mb}">${escH(line)}</div>`;
     }).join('');
-    const sourceLine = (sourceBadge && (sourceBadge.label==='✓ SOURCED FROM LIVE NEWS' || sourceBadge.label==='🔥 LIVE SEARCHED')) ? `\n\n[Reference: ${sourceBadge.detail}]` : '';
-    const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+sourceLine+'\n\n'+(hashData.hashtags||[]).slice(0,5).join(' ');
+    const sourceLine = (sourceBadge && (sourceBadge.label==='✓ SOURCED FROM LIVE NEWS' || sourceBadge.label==='🔥 LIVE SEARCHED')) ? `\n\n[Reference: ${sourceBadge.detail.replace(/ · (article read|headline only)$/,'')}]` : '';
+    const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+sourceLine+'\n\n'+(hashData.hashtags||[]).slice(0,4).join(' ');
+    const chip=(k,v,col)=>`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">${k}</span><span style="font-size:11px;color:${col}">${v}</span></div>`;
+    const checkChip = sc.flags.length
+      ? sc.flags.map(f=>chip('⚠',escH(f),'#C47878')).join('')
+      : chip('VOICE CHECK','Clean','#7AC8A0');
     return `<div class="variant-card" style="border-top:2px solid ${angle.color}">
       <div class="variant-header">
         <div><span style="font-size:9px;color:${angle.color};font-family:monospace;letter-spacing:2px">VARIANT ${i+1}</span><span style="font-size:10px;color:var(--dim);font-family:monospace;margin-left:8px">${angle.label}</span></div>
-        <div style="display:flex;gap:4px">${['🔥','👍','👎'].map(r=>`<button style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:4px" onclick="rateBtn(this)">${r}</button>`).join('')}</div>
       </div>
       <div style="padding:8px 14px;border-bottom:1px solid var(--border2);display:flex;gap:6px;flex-wrap:wrap">
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">VIRAL</span><span style="font-size:14px;font-weight:700;color:${sc.color}">${sc.score}</span><span style="font-size:10px;color:${sc.color}">${sc.label}</span></div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">HOOK</span><span style="font-size:11px;color:${sc.hookColor}">${sc.hook}</span></div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">WORDS</span><span style="font-size:11px;color:${sc.words>=200&&sc.words<=280?'#7AC8A0':'#C47878'}">${sc.words}</span></div>
+        ${checkChip}
+        ${chip('HOOK',sc.hook,sc.hook==='Long'?'#C47878':'#7AC8A0')}
+        ${chip('WORDS',sc.words,sc.inRange?'#7AC8A0':'#C8956E')}
       </div>
       <div class="variant-body">${lines}</div>
-      <div class="variant-footer">
-        <button class="copy-btn" style="background:${angle.color};color:#080808;flex:2;width:70%" onclick="copyTxt(this,'${escJ(postWithTags)}')">COPY POST + HASHTAGS</button>
-        <button class="copy-btn" style="background:var(--bg3);color:var(--gold);border:1px solid ${angle.color}33;flex:1;width:30%;font-size:9px" onclick="copyTxt(this,'${escJ((hashData.hashtags||[]).join(' '))}')">TAGS</button>
+      <div class="variant-footer" style="flex-wrap:wrap">
+        <button class="copy-btn" style="background:${angle.color};color:#080808;flex:2" onclick="copyTxt(this,'${escJ(postWithTags)}')">COPY POST + TAGS</button>
+        <button class="copy-btn" style="background:var(--bg3);color:var(--gold);border:1px solid ${angle.color}33;flex:1;font-size:9px" onclick="copyTxt(this,'${escJ((hashData.hashtags||[]).join(' '))}')">TAGS</button>
+        <button class="copy-btn" style="background:var(--bg3);color:#7AC8A0;border:1px solid #7AC8A044;flex:1;font-size:9px" onclick="markPosted(${i},this)" title="Saves this post so future posts don't repeat its story or opening">I POSTED THIS</button>
       </div>
     </div>`;
   }).join('');
@@ -1409,7 +1622,7 @@ async function generateStatCover(){
   try {
     const raw = await callAPI(
       `Extract the single most important statistic, number, or bold claim from this text and format it for a visual cover card. CRITICAL: Do NOT invent a new number or claim — only extract and rephrase what is literally present in this text. If no specific stat/claim exists in the text, use its strongest general statement instead, and set "hasStat" to false.\n\nText: "${text.replace(/"/g,"'")}"\n\nReturn ONLY valid JSON: {"headline":"short punchy version max 60 chars, using only what was in the text","subtext":"one supporting sentence, max 90 chars","source":"exact source name if one was mentioned in the text, else empty string","hasStat":true}`,
-      DNA
+      fullSystem('general')
     );
     const s=raw.indexOf('{'), e=raw.lastIndexOf('}')+1;
     if(s===-1) throw new Error('Could not parse response');
@@ -1483,7 +1696,7 @@ function logPerformance(){
 
 // ============ API ============
 async function callAPI(userMsg, systemPrompt){
-  const sys = systemPrompt || DNA;
+  const sys = systemPrompt || fullSystem('general');
   switch(activeProvider){
     case 'gemini': return callGemini(userMsg, sys);
     case 'groq': return callGroq(userMsg, sys);
@@ -1524,7 +1737,7 @@ CRITICAL RULES — these are non-negotiable:
 - Close with a one-line offer of a "want the basics first" resource if genuinely found, plus a short warm closing line — no fabricated content.
 
 Do not add hashtags, I will add those separately. Return ONLY the post text.`,
-      DNA
+      fullSystem('general')
     );
 
     const hashRaw = await callAPI(
@@ -1542,14 +1755,32 @@ Do not add hashtags, I will add those separately. Return ONLY the post text.`,
   }
 }
 
+const CLAUDE_MODELS = {'claude-opus-5-5':'Opus 5.5 (best voice)','claude-sonnet-5':'Sonnet 5 (cheaper)'};
+function claudeModel(){ return localStorage.getItem('bcis_claude_model') || 'claude-opus-5-5'; }
+function setClaudeModel(m, btn){
+  localStorage.setItem('bcis_claude_model', m);
+  document.querySelectorAll('.model-pill').forEach(p=>{p.style.background='none';p.style.borderColor='#1e1e1e';p.style.color='#555';});
+  if(btn){btn.style.background='#C8A96E18';btn.style.borderColor='#C8A96E';btn.style.color='#C8A96E';}
+}
+function highlightClaudeModel(){
+  document.querySelectorAll('.model-pill').forEach(p=>{
+    const on = p.dataset.model===claudeModel();
+    p.style.background=on?'#C8A96E18':'none'; p.style.borderColor=on?'#C8A96E':'#1e1e1e'; p.style.color=on?'#C8A96E':'#555';
+  });
+}
+
 async function callClaude(userMsg, sys, opts){
   if(!claudeKey) throw new Error('No Claude API key. Add one in Setup.');
-  const body={model:'claude-sonnet-5',max_tokens:(opts&&opts.maxTokens)||1000,system:sys||DNA,messages:[{role:'user',content:userMsg}]};
-  if(opts && opts.tools) body.tools = opts.tools;
-  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+  opts = opts || {};
+  const body={model:opts.model||claudeModel(),max_tokens:opts.maxTokens||1000,system:sys||fullSystem('general'),messages:[{role:'user',content:userMsg}]};
+  if(opts.tools) body.tools = opts.tools;
+  const headers={'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+  if(opts.beta) headers['anthropic-beta']=opts.beta;
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify(body)});
   const data=await res.json();
   if(data.error)throw new Error(data.error.message||JSON.stringify(data.error));
-  return data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  const texts=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+  return opts.lastTextOnly ? (texts[texts.length-1]||'') : texts.join('\n');
 }
 
 const GEMINI_DEFAULT_MODEL='gemini-3.5-flash-lite';
