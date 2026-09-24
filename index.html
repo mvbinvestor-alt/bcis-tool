@@ -245,8 +245,15 @@ input:focus{outline:none;border-color:var(--gold)}
     <div class="sec" style="margin-top:14px">03 · Choose Your Variant</div>
     <div id="variantsWrap"></div>
     <div class="card" style="font-size:10px;color:var(--dim);font-family:monospace;line-height:2">
-      <span style="color:var(--gold)">DIRECTOR RULE</span> · Verify every fact before posting · Post 8am · Reply every comment within 60 min · Comment on top voices daily
+      <span style="color:var(--gold)">BEFORE YOU POST</span> · Edit in your own words, then check the final version below · Verify every fact before posting · Post 8am · Reply every comment within 60 min · Comment on top voices daily
     </div>
+  </div>
+  <div class="sec">Check Your Final Version</div>
+  <div class="card">
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;line-height:1.7;margin-bottom:8px">Paste the post exactly as you'll publish it, after your edits. Scored against your own real posts, not an AI detector.</div>
+    <textarea id="finalDraft" style="min-height:110px" placeholder="Paste your final post"></textarea>
+    <button class="btn btn-gold btn-full" style="margin-top:8px" onclick="checkFinalDraft()">CHECK IT</button>
+    <div id="finalDraftOut"></div>
   </div>
 </div>
 
@@ -705,6 +712,7 @@ function clearVoice(){
 }
 
 function renderVoiceStatus(){
+  voiceBaseline = null;
   const el = document.getElementById('voiceStatus'); if(!el) return;
   const own = ownVoice(); const n = own.length;
   const byTag = own.reduce((m,v)=>{m[v.tag]=(m[v.tag]||0)+1;return m;},{});
@@ -747,7 +755,7 @@ function ledgerBlock(ctx){
 
 function markPosted(i, btn){
   const text = lastVariants[i]; if(!text) return;
-  ledger.unshift({date:Date.now(), text, type:lastTypeId, take:!!lastTake, flags:scorePost(text).flags.length});
+  ledger.unshift({date:Date.now(), text, type:lastTypeId, take:!!lastTake, flags:scorePost(text).flags.length, score:soundsLikeScore(text).score});
   ledger = ledger.slice(0,200);
   localStorage.setItem('bcis_ledger', JSON.stringify(ledger));
   const day = new Date().getDay(); const key = getWeekKey()+'_'+day;
@@ -811,7 +819,7 @@ function renderReadiness(){
   const s=strategy(); const r28=postsSince(28);
   const authShare = r28.length ? Math.round(100*r28.filter(p=>isAuthority(p.type)).length/r28.length) : 0;
   const takeShare = r28.length ? Math.round(100*r28.filter(p=>p.take).length/r28.length) : 0;
-  const cleanShare = r28.length ? Math.round(100*r28.filter(p=>!p.flags).length/r28.length) : 0;
+  const cleanShare = r28.length ? Math.round(100*r28.filter(p=>!p.flags && (p.score==null || p.score>=70)).length/r28.length) : 0;
   const cad8 = weeksAtCadence(8);
   const comments = commentLog.filter(d=>d>Date.now()-7*86400000).length;
   const logged = r28.filter(p=>p.metrics).length;
@@ -829,7 +837,7 @@ function renderReadiness(){
     row(comments>=10,'Community engagement','— '+comments+' comments this week','Thoughtful comments in your lane count toward presence and get you seen by bigger accounts. Target: 10+ a week. Use Comment Coach below.')+
     row(r28.length>0 && authShare>=s.authorityPct-10,'Clear expertise lane','— '+authShare+'% authority (target '+s.authorityPct+'%)','Authority pillars: Operator, Data, Culture. Topical consistency is also what the feed uses to decide who sees you.')+
     row(r28.length>0 && takeShare>=50,'Original voice','— your own take in '+takeShare+'% of posts','Originality is one of the named criteria. Posts built on your own take read as yours. Target: half or more.')+
-    row(r28.length>0 && cleanShare>=80,'Quality','— '+cleanShare+'% passed voice check','No résumé lines, no stock phrases, no recycled stories.')+
+    row(r28.length>0 && cleanShare>=80,'Quality','— '+cleanShare+'% passed voice check','Sounds-like-you score 70+ and a clean voice check. Run Editor Read and check your final version before posting.')+
     row(logged>=Math.min(3,r28.length) && r28.length>0,'Learning loop','— '+logged+' of '+r28.length+' posts have results logged','Log comments and senior engagers in Analytics so the Brief learns what works.')+
     row(ready && canNom,'Nomination',
       s.lastNomination ? '— last: '+new Date(s.lastNomination).toLocaleDateString()+(canNom?' · eligible again':' · next: '+new Date(nextNom).toLocaleDateString()) : '— not yet submitted',
@@ -895,6 +903,118 @@ Return ONLY a JSON array of 3 strings.`, fullSystem('general'));
   }catch(err){ out.innerHTML=''; showErr('coachErr','Comment drafting failed: '+err.message); }
 }
 function logComment(){ commentLog.push(Date.now()); commentLog=commentLog.filter(d=>d>Date.now()-60*86400000); localStorage.setItem('bcis_comments',JSON.stringify(commentLog)); renderReadiness(); }
+
+// ============ V6.2: "SOUNDS LIKE BALAJI" SCORE ============
+// Not an AI detector (those are unreliable). This measures how close a draft is to
+// Balaji's own published writing, signal by signal, against his real posts.
+const MONTHS_RE = /\b(January|February|March|April|May|June|July|August|September|October|November|December|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|weekend|last night|yesterday|this week|last week|this morning)\b/g;
+const SOUND_STOCK_RE = /fundamental shift|human-centered|multidisciplinary|implication[^.]{0,30}is clear|\bwe must\b|as we continue|\bleverag(e|ing)\b|\brobust\b|\bholistic\b|at the intersection|in today'?s (world|landscape)|paradigm|game[- ]changer|unlock(ing)? the (full )?potential|rapidly evolving|it'?s important to note|as we navigate|excited to share|delve/gi;
+
+function voiceFeatures(t){
+  const words = t.split(/\s+/).filter(Boolean).length || 1;
+  const sents = t.replace(/([.!?])\s+/g,'$1\n').split('\n').map(s=>s.trim()).filter(s=>s.split(/\s+/).length>2);
+  const L = sents.map(s=>s.split(/\s+/).length);
+  const mean = L.reduce((a,b)=>a+b,0)/(L.length||1);
+  const sd = L.length>1 ? Math.sqrt(L.reduce((a,b)=>a+(b-mean)*(b-mean),0)/L.length) : 0;
+  let names = 0; const nameRe=/\b[A-Z][a-z]+ [A-Z][a-z]+\b/g; let m;
+  while((m=nameRe.exec(t))){ const pre=t.slice(Math.max(0,m.index-2),m.index); if(m.index>0 && !/[.!?\n]\s?$/.test(pre)) names++; }
+  const nums = (t.match(/\b(19|20)\d\d\b|\b\d+\b/g)||[]).length + (t.match(MONTHS_RE)||[]).length;
+  const stock = (t.match(SOUND_STOCK_RE)||[]).map(s=>s.toLowerCase());
+  return {
+    burst: mean ? sd/mean : 0,
+    spec: 100*(nums+names)/words,
+    aside: (t.match(/\([^)]{3,}\)/g)||[]).length + (t.match(/🙂|:\)/g)||[]).length,
+    personal: 100*(t.match(/\b(I|my|me|we|our|I'm|I've)\b/g)||[]).length/words,
+    abstract: 100*(t.match(/\b\w+(tion|ity|ness|ment|ance|ence)s?\b/gi)||[]).length/words,
+    stock: [...new Set(stock)], words
+  };
+}
+
+let voiceBaseline = null;
+function computeBaseline(){
+  const own = ownVoice().filter(v=>v.text.split(/\s+/).length>=25);
+  const pool = own.length>=3 ? own : SEED_VOICE;
+  const F = pool.map(v=>voiceFeatures(v.text));
+  const avg = k => F.reduce((a,f)=>a+f[k],0)/F.length;
+  voiceBaseline = {burst:avg('burst'), spec:avg('spec'), aside:avg('aside'), personal:avg('personal'), abstract:avg('abstract'), n:pool.length, own:own.length>=3};
+  return voiceBaseline;
+}
+
+function soundsLikeScore(text){
+  const b = voiceBaseline || computeBaseline();
+  const f = voiceFeatures(text);
+  const r = (x,y)=> y>0 ? Math.min(1, x/y) : 1;
+  const parts = {
+    spec:     {w:25, v:r(f.spec, b.spec*0.8),        tip:'Add one real specific: a name, a date, a place, or a moment.'},
+    stock:    {w:20, v:Math.max(0, 1 - 0.35*f.stock.length), tip:f.stock.length ? 'Stock phrase: '+f.stock.join(', ')+'. Say it the way you would.' : ''},
+    burst:    {w:15, v:r(f.burst, b.burst*0.85),      tip:'Sentences are all a similar length. Mix in a short one.'},
+    personal: {w:15, v:r(f.personal, b.personal*0.8), tip:'Too distant. Say what you saw, did, or felt.'},
+    abstract: {w:15, v:f.abstract<=b.abstract*1.15 ? 1 : Math.max(0, (b.abstract*1.15)/f.abstract), tip:'Too many abstract nouns (-tion, -ity, -ness). Swap one for a concrete example.'},
+    aside:    {w:10, v:(b.aside<0.5 || f.aside>0) ? 1 : (f.words<120 ? 0.8 : 0.4), tip:'Your posts often have a bracketed aside or a 🙂. Optional, but it is very you.'},
+  };
+  let score = 0; const tips = [];
+  Object.values(parts).forEach(p=>{ score += p.w*p.v; if(p.v<0.75 && p.tip) tips.push({gap:p.w*(1-p.v), tip:p.tip}); });
+  score = Math.round(score);
+  tips.sort((a,b)=>b.gap-a.gap);
+  const label = score>=80 ? 'Sounds like you' : score>=60 ? 'Close' : 'Generic';
+  const color = score>=80 ? '#7AC8A0' : score>=60 ? '#C8A96E' : '#C47878';
+  return {score, label, color, tips:tips.slice(0,3).map(t=>t.tip)};
+}
+
+// ---- editor read: marks the lines that don't sound like him ----
+let editorNotes = {};
+async function editorRead(i, btn){
+  const text = lastVariants[i]; if(!text) return;
+  if(!checkClaudeKey()) return;
+  btn.disabled=true; btn.textContent='READING...';
+  const samples = pickVoiceSamples('general', 3).samples.map((v,k)=>`=== HIS POST ${k+1} ===\n${v.text.slice(0,1400)}`).join('\n\n');
+  try{
+    const raw = await callAPI(`${samples}\n\n=== DRAFT ===\n${text}\n\nYou are his editor. Compare the draft with his real posts above. Find up to 3 lines in the draft that do not sound like him (generic, abstract, corporate, or AI-sounding). For each, give a rewrite in his real style: same meaning, concrete, warm, his rhythm. Never add facts, names, numbers, or events that are not already in the draft. If the draft already sounds like him, return an empty list.
+Return ONLY JSON: {"verdict":"one short sentence on how close it is","lines":[{"line":"exact text copied from the draft","why":"few words","rewrite":"the new line"}]}`,
+      'You are a careful editor. Return only valid JSON.');
+    const s=raw.indexOf('{'), e=raw.lastIndexOf('}')+1; const d=JSON.parse(raw.slice(s,e));
+    editorNotes[i] = {verdict:d.verdict||'', lines:(d.lines||[]).filter(l=>l.line && text.includes(l.line)).slice(0,3)};
+  }catch(err){ editorNotes[i] = {verdict:'Editor read failed: '+err.message, lines:[]}; }
+  rerenderVariants(i);
+}
+function applyEdit(i, k){
+  const n = editorNotes[i]; if(!n || !n.lines[k]) return;
+  lastVariants[i] = lastVariants[i].replace(n.lines[k].line, n.lines[k].rewrite);
+  n.lines.splice(k,1);
+  rerenderVariants(i);
+}
+function editorPanel(i){
+  const n = editorNotes[i]; if(!n) return '';
+  return `<div style="padding:10px 14px;border-top:1px solid var(--border2);background:var(--bg3)">
+    <div style="font-size:9px;color:var(--gold);font-family:monospace;letter-spacing:2px;margin-bottom:6px">EDITOR READ</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:${n.lines.length?'8px':'0'}">${escH(n.verdict)}</div>
+    ${n.lines.map((l,k)=>`<div style="border-left:2px solid #C47878;padding:4px 0 4px 10px;margin-bottom:10px">
+      <div style="font-size:12px;color:#C47878;text-decoration:line-through">${escH(l.line)}</div>
+      <div style="font-size:10px;color:var(--dim);font-family:monospace;margin:2px 0">${escH(l.why||'')}</div>
+      <div style="font-size:12px;color:#7AC8A0;margin-bottom:6px">${escH(l.rewrite)}</div>
+      <button class="copy-btn" style="background:var(--bg);color:#7AC8A0;border:1px solid #7AC8A044;font-size:9px" onclick="applyEdit(${i},${k})">USE THIS LINE</button>
+    </div>`).join('')}
+  </div>`;
+}
+let lastRenderArgs = null;
+function rerenderVariants(){
+  if(!lastRenderArgs) return;
+  const a = lastRenderArgs;
+  a.scores = lastVariants.map((t,k)=>scorePost(t, a.formats ? a.formats[k] : null));
+  renderVariants(lastVariants, a.scores, a.hashData, a.typeId, a.sourceBadge, a.formats, true);
+}
+
+// ---- check a final draft (after your own edits) ----
+function checkFinalDraft(){
+  const t = document.getElementById('finalDraft').value.trim();
+  const out = document.getElementById('finalDraftOut');
+  if(t.split(/\s+/).length < 20){ out.innerHTML='<div style="color:var(--dim);font-size:11px;font-family:monospace">Paste the full post (20+ words).</div>'; return; }
+  const s = soundsLikeScore(t); const v = scorePost(t);
+  out.innerHTML = `<div style="margin-top:10px;font-size:22px;color:${s.color}">${s.score} <span style="font-size:12px">${s.label}</span></div>
+    ${s.tips.map(x=>`<div style="font-size:11px;color:var(--muted);margin-top:4px">• ${escH(x)}</div>`).join('')}
+    ${v.flags.map(x=>`<div style="font-size:11px;color:#C47878;margin-top:4px">⚠ ${escH(x)}</div>`).join('')}
+    ${!s.tips.length && !v.flags.length ? '<div style="font-size:11px;color:var(--green);margin-top:4px">Ready to post.</div>':''}`;
+}
 
 // ============ V6: FORMATS ============
 const FORMATS = [
@@ -1624,7 +1744,9 @@ React to it; do not summarise it back. Explain any specialised term in one casua
   }
 }
 
-function renderVariants(variants,scores,hashData,typeId,sourceBadge,formats) {
+function renderVariants(variants,scores,hashData,typeId,sourceBadge,formats,noScroll) {
+  lastRenderArgs = {hashData,typeId,sourceBadge,formats};
+  if(!noScroll) editorNotes = {};
   const section=document.getElementById('variantsSection');
   const wrap=document.getElementById('variantsWrap');
   section.style.display='block';
@@ -1662,6 +1784,9 @@ function renderVariants(variants,scores,hashData,typeId,sourceBadge,formats) {
     const sourceLine = (sourceBadge && (sourceBadge.label==='✓ SOURCED FROM LIVE NEWS' || sourceBadge.label==='🔥 LIVE SEARCHED')) ? `\n\n[Reference: ${sourceBadge.detail.replace(/ · (article read|headline only)$/,'')}]` : '';
     const postWithTags=text.replace(/(#\w+\s*)+$/,'').trim()+sourceLine+'\n\n'+(hashData.hashtags||[]).slice(0,3).join(' ');
     const chip=(k,v,col)=>`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 9px;display:flex;align-items:center;gap:5px"><span style="font-size:8px;color:var(--dim);font-family:monospace">${k}</span><span style="font-size:11px;color:${col}">${v}</span></div>`;
+    const sl = soundsLikeScore(text);
+    const slChip = chip('SOUNDS LIKE YOU', sl.score+' · '+sl.label, sl.color);
+    const slTips = sl.tips.length ? `<div style="padding:6px 14px 0;font-size:11px;color:var(--muted);line-height:1.6">${sl.tips.map(t=>'• '+escH(t)).join('<br>')}</div>` : '';
     const checkChip = sc.flags.length
       ? sc.flags.map(f=>chip('⚠',escH(f),'#C47878')).join('')
       : chip('VOICE CHECK','Clean','#7AC8A0');
@@ -1670,19 +1795,23 @@ function renderVariants(variants,scores,hashData,typeId,sourceBadge,formats) {
         <div><span style="font-size:9px;color:${angle.color};font-family:monospace;letter-spacing:2px">VARIANT ${i+1}</span><span style="font-size:10px;color:var(--dim);font-family:monospace;margin-left:8px">${angle.label}</span></div>
       </div>
       <div style="padding:8px 14px;border-bottom:1px solid var(--border2);display:flex;gap:6px;flex-wrap:wrap">
+        ${slChip}
         ${checkChip}
         ${chip('HOOK',sc.hook,sc.hook==='Long'?'#C47878':'#7AC8A0')}
         ${chip('WORDS',sc.words,sc.inRange?'#7AC8A0':'#C8956E')}
       </div>
+      ${slTips}
       <div class="variant-body">${lines}</div>
       <div class="variant-footer" style="flex-wrap:wrap">
         <button class="copy-btn" style="background:${angle.color};color:#080808;flex:2" onclick="copyTxt(this,'${escJ(postWithTags)}')">COPY POST + TAGS</button>
         <button class="copy-btn" style="background:var(--bg3);color:var(--gold);border:1px solid ${angle.color}33;flex:1;font-size:9px" onclick="copyTxt(this,'${escJ((hashData.hashtags||[]).join(' '))}')">TAGS</button>
         <button class="copy-btn" style="background:var(--bg3);color:#7AC8A0;border:1px solid #7AC8A044;flex:1;font-size:9px" onclick="markPosted(${i},this)" title="Saves this post so future posts don't repeat its story or opening">I POSTED THIS</button>
+        <button class="copy-btn" style="background:var(--bg3);color:var(--gold);border:1px solid #C8A96E44;flex:1;font-size:9px" onclick="editorRead(${i},this)">${editorNotes[i]?'EDITOR READ AGAIN':'EDITOR READ'}</button>
       </div>
+      ${editorPanel(i)}
     </div>`;
   }).join('');
-  section.scrollIntoView({behavior:'smooth',block:'start'});
+  if(!noScroll) section.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ============ CALENDAR ============
