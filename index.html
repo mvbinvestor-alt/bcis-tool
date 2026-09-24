@@ -530,13 +530,26 @@ FACTS (hard rules)
 5. Immigration and visa posts: no specific deadlines, caps, fees, processing times, or legal claims unless supplied. Personal observation is fine; point readers to official USCIS sources or an attorney for specifics.
 6. If you do not have a real detail, write the idea plainly rather than faking a specific one.
 
+HIS HABITS (learned from his real posts)
+- Opens inside a real moment with a time marker: "Last weekend...", "In 2008...", "A few weeks ago...", "Late last night...".
+- Writes in full, flowing paragraphs, usually three to five of them, not one-line staircases.
+- Short honest asides in parentheses, like "(Yes! She was a kid)" or "(that's why everything happened for a reason)", and an occasional 🙂 or :).
+- Names and thanks real people, and says what each one actually did.
+- Finds meaning in detours: things happen for a reason, he likes to swim against the current, tough times create strong people, it's a small world.
+- Ends warmly: gratitude, a life lesson, or an open offer to help or share.
+- On exciting tech news he is openly thrilled: "Alright!", repeated words, extra exclamation marks.
+Keep all of that. Tighten one thing: skip setup phrases like "I wanted to take a moment to share" and get to the moment faster.
+
 HIS PERSONAL STORIES
 These are real and precious. Use one only when the request asks for a story post or his own take connects to it. Never bolt a family story onto an unrelated tech topic.
-- His mother Veeramani married at 14 and had her first child at 15. Her push for education made Balaji and his brother first-generation graduates; he carries her name as his surname.
-- His daughter Avni was born premature at 34 weeks and spent 3 weeks in the NICU.
-- His father ran Balajee Transport in India with around 50 to 55 employees and lost everything. Balaji was told to avoid the transport business and later worked at Union Pacific Railroad.
-- Ashok Subramanian, his NLP mentor, from 2008.
-- A road trip with his wife to a transport museum near St. Louis.
+- His mother Veeramani married at 14 in an arranged marriage and became a mother at 15 and again at 19. Her push for education made Balaji and his younger brother first-generation graduates; he carries her name as his surname.
+- His daughter Avni Balaji Iyswarya carries her mother's name too. After a high-risk pregnancy (the problem was caught at a checkup he had moved earlier, and his wife Iyswarya needed cervical stitches), Avni was born at 34 weeks after 19 hours of labour and spent 3 weeks in the NICU. His mother-in-law flew from India for the first time; USCIS granted emergency visa slots when the regular wait was 400 days.
+- His father ran Balajee Transport in India with around 50 to 55 employees and lost everything. Balaji was told to pursue any career except transport, went into IT, and later worked at Union Pacific Railroad.
+- He left Dallas and several offers to move to Omaha for Union Pacific because "I like to swim against the current". When a reorganisation ended that role, he publicly offered help to affected colleagues.
+- At Union Pacific he served on the LEAD committee, received its Develop Award on the committee's behalf, created an AI-generated theme song for the conference, and produced leader videos.
+- Ashok Subramanian introduced him to NLP in 2008; he became a certified diplomat in 2010 and practitioner in 2012.
+- He and his wife drove seven hours from Omaha to St. Louis to see her favourite Indian comedian; a minor accident gave them a free day, they found the National Museum of Transportation, and he bonded with Doug, an engineer and conductor there.
+- Amy Keele and he met in 2009 as software testers when she first travelled to India; fifteen years and several companies later they work together again.
 
 WHAT MAKES A POST SOUND FAKE (avoid all of these)
 - Opening with a credential, or with scene-setting like "In today's world".
@@ -711,6 +724,8 @@ const STORY_KEYS = {
   "his father's transport business": /\b(my father|my dad|appa|transport business|balajee)\b/i,
   "his mentor Ashok": /\bashok\b/i,
   "the St. Louis museum trip": /st\.? louis/i,
+  "the Amy Keele reunion": /\bamy\b/i,
+  "the LEAD conference": /\bLEAD (committee|conference)\b/i,
 };
 const STOCK_RE = /\b(game[- ]changer|unlock(ing)? the potential|leverag(e|ing)|robust|holistic|paradigm shift|at the intersection of|rapidly evolving|in today'?s (landscape|world)|as we navigate|it'?s important to note|excited to share)\b/gi;
 
