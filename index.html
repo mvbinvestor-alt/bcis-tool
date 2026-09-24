@@ -865,7 +865,9 @@ function checkClaudeKey(){
   const hasKey={claude:claudeKey,gemini:geminiKey,groq:groqKey,deepseek:deepseekKey}[activeProvider];
   if(!hasKey){
     const name={claude:'Claude',gemini:'Gemini',groq:'Groq',deepseek:'DeepSeek'}[activeProvider];
-    alert('No '+name+' API key found. Add one in the Setup tab, or switch providers there.');
+    const msg='No '+name+' API key found on this device. Add one in the Setup tab, or switch providers there.';
+    ['genErr','briefErr'].forEach(id=>showErr(id,msg));
+    const box=document.getElementById('genErr'); if(box && box.offsetParent) box.scrollIntoView({behavior:'smooth',block:'center'});
     return false;
   }
   return true;
@@ -1289,7 +1291,7 @@ function renderSeeds() {
       ${gateWarning}
       <div style="font-size:11px;color:var(--dim);font-family:monospace;margin-bottom:8px">Pick a topic or type your own:</div>
       <div class="pill-row" style="margin-bottom:12px">
-        ${['AI agents','Prompt engineering','MCP servers','Data governance','LLM evaluation','Vibe coding','Enterprise AI adoption'].map(t=>`<button class="pill" onclick="document.getElementById('trendingTopicInput').value='${escJ(t)}'" style="border-color:${COLORS.trending}40;color:${COLORS.trending}">${t}</button>`).join('')}
+        ${['Free Google certifications','Free AI certifications','AI agents','Prompt engineering','MCP servers','Data governance','LLM evaluation','Vibe coding','Enterprise AI adoption'].map(t=>`<button class="pill" onclick="document.getElementById('trendingTopicInput').value='${escJ(t)}'" style="border-color:${COLORS.trending}40;color:${COLORS.trending}">${t}</button>`).join('')}
       </div>
       <input type="text" id="trendingTopicInput" placeholder="e.g. AI agents, RAG pipelines, LinkedIn algorithm changes..." style="margin-bottom:12px" />
       <button class="btn btn-gold btn-full" id="trendingSearchBtn" onclick="generateTrendingRoundup()" ${!isClaudeActive?'disabled':''}>🔥 SEARCH & BUILD ROUNDUP</button>
@@ -1318,7 +1320,7 @@ async function generateLearningCarousel(resourceIndex) {
   if(!checkClaudeKey()) return;
   const r = VERIFIED_RESOURCES[resourceIndex];
   hideErr('genErr');
-  document.getElementById('genLoading').style.display='block';
+  showGenLoading('WRITING CAPTION + CAROUSEL');
   document.getElementById('variantsSection').style.display='none';
 
   const resourceFact = `${r.name} by ${r.provider}. ${r.desc} (${r.url})`;
@@ -1377,8 +1379,8 @@ async function generate(topicText, typeId, mode, realSourceName, story) {
   hideErr('genErr');
   const loading = document.getElementById('genLoading');
   const loadingSub = loading.querySelector('div:last-child');
-  loading.style.display='block';
   document.getElementById('variantsSection').style.display='none';
+  showGenLoading('WRITING 3 FORMATS');
 
   if(isNewsStale()){
     if(loadingSub) loadingSub.textContent='REFRESHING NEWS';
@@ -1717,8 +1719,8 @@ async function generateTrendingRoundup(){
   if(!checkClaudeKey()) return;
 
   hideErr('genErr');
-  document.getElementById('genLoading').style.display='block';
   document.getElementById('variantsSection').style.display='none';
+  showGenLoading('SEARCHING THE WEB');
   totalGenerated++;
   localStorage.setItem('bcis_generated',totalGenerated);
 
@@ -1852,7 +1854,12 @@ async function callDeepseek(userMsg, sys){
 }
 
 // ============ HELPERS ============
-function showErr(id,msg){const b=document.getElementById(id);if(b){b.textContent=msg;b.style.display='block';}}
+function showErr(id,msg){const b=document.getElementById(id);if(b){b.textContent=msg;b.style.display='block';if(id==='genErr'&&b.offsetParent)b.scrollIntoView({behavior:'smooth',block:'center'});}}
+function showGenLoading(label){
+  const l=document.getElementById('genLoading'); if(!l) return;
+  const sub=l.querySelector('div:last-child'); if(sub&&label) sub.textContent=label;
+  l.style.display='block'; l.scrollIntoView({behavior:'smooth',block:'center'});
+}
 function hideErr(id){const b=document.getElementById(id);if(b)b.style.display='none';}
 function escJ(s){
   // Step 1: escape for the single-quoted JS string literal itself
